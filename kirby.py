@@ -63,8 +63,8 @@ class Idle: #커비 대기 상태
     def do(self):
         self.kirby.frame = (self.kirby.frame + 1) % 2
     def draw(self):
-        if self.kirby.face_dir == 1: # rightㅋ
-            self.kirby.image.clip_draw(self.kirby.frame * 30, 0, 30, 40, self.kirby.x, self.kirby.y, 60, 80)
+        if self.kirby.face_dir == 1: # right
+            self.kirby.image.clip_draw(self.kirby.frame * 31, 0, 31, 39, self.kirby.x, self.kirby.y, 62, 78)
 
 class Down: #커비 앉기 상태
     def __init__(self, kirby):
