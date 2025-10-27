@@ -6,7 +6,38 @@ import game_world
 
 class Kirby: #부모 클래스 커비
     def __init__(self):
-        pass
+        self.Idle = Idle(self)
+        self.Down = Down(self)
+        self.Walk = Walk(self)
+        self.Dash = Dash(self)
+        self.IdleDashAttack = IdleDashAttack(self)
+        self.DashAttack = DashAttack(self)
+        self.IdleJump = IdleJump(self)
+        self.IdleRise = IdleRise(self)
+        self.Jump = Jump(self)
+        self.SpinAttack = SpinAttack(self)
+        self.IdleSuperJump = IdleSuperJump(self)
+        self.SuperJump = SuperJump(self)
+        self.EndSuperJump = EndSuperJump(self)
+        self.IdleFall = IdleFall(self)
+        self.Fall = Fall(self)
+        self.IdleLand = IdleLand(self)
+        self.IdleAttack = IdleAttack(self)
+        self.IdleSlashAttack = IdleSlashAttack(self)
+        self.SlashAttack = SlashAttack(self)
+        self.RapidAttack = RapidAttack(self)
+        self.IdleJumpAttack = IdleJumpAttack(self)
+        self.RiseJumpAttack = RiseJumpAttack(self)
+        self.JumpAttack = JumpAttack(self)
+        self.FallJumpAttack = FallJumpAttack(self)
+        self.EndJumpAttack = EndJumpAttack(self)
+        self.Hit = Hit(self)
+        self.IdleGuard = IdleGuard(self)
+        self.Guard = Guard(self)
+        self.Win = Win(self)
+        self.Star = Star(self)
+        self.state_machine = StateMachine(self.Idle, {})
+
     def update(self):
         self.state_machine.update()
     def handle_event(self, event):
