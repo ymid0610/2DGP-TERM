@@ -5,7 +5,6 @@ from state_machine import StateMachine
 import game_world
 
 class Kirby: #부모 클래스 커비
-    image = None
     def __init__(self):
         self.x, self.y = 400, 90
         self.frame = 0
@@ -43,8 +42,6 @@ class Kirby: #부모 클래스 커비
         self.Win = Win(self)
         self.Star = Star(self)
         self.state_machine = StateMachine(self.Idle, {})
-        if Kirby.image == None:
-            Kirby.image = load_image('Resource/Character/KirbyIdle.png')
 
     def update(self):
         self.state_machine.update()
@@ -54,8 +51,11 @@ class Kirby: #부모 클래스 커비
         self.state_machine.draw()
 
 class Idle: #커비 대기 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if Idle.image == None:
+            Idle.image = load_image('Resource/Character/KirbyIdle.png')
     def enter(self, e):
         self.kirby.dir = 0
     def exit(self, e):
@@ -64,7 +64,7 @@ class Idle: #커비 대기 상태
         self.kirby.frame = (self.kirby.frame + 1) % 2
     def draw(self):
         if self.kirby.face_dir == 1: # right
-            self.kirby.image.clip_draw(self.kirby.frame * 31, 0, 31, 39, self.kirby.x, self.kirby.y, 62, 78)
+            Idle.image.clip_draw(self.kirby.frame * 31, 0, 31, 39, self.kirby.x, self.kirby.y, 62, 78)
 
 class Down: #커비 앉기 상태
     def __init__(self, kirby):
