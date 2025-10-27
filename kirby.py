@@ -4,6 +4,9 @@ from sdl2 import SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT, SDLK
 from state_machine import StateMachine
 import game_world
 
+# 크기 배율 변수
+SCALE = 3 # 배율
+
 class Kirby: #부모 클래스 커비
     def __init__(self):
         self.x, self.y = 400, 90
@@ -41,7 +44,7 @@ class Kirby: #부모 클래스 커비
         self.Guard = Guard(self)
         self.Win = Win(self)
         self.Star = Star(self)
-        self.state_machine = StateMachine(self.Idle, {})
+        self.state_machine = StateMachine(self.Walk, {})
 
     def update(self):
         self.state_machine.update()
@@ -79,16 +82,20 @@ class Down: #커비 앉기 상태
         pass
 
 class Walk: #커비 걷기 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if Walk.image == None:
+            Walk.image = load_image('Resource/Character/KirbyWalk.png')
     def enter(self, e):
         pass
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + 1) % 12
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1: # right
+            Walk.image.clip_draw(self.kirby.frame * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Dash: #커비 대쉬 상태
     def __init__(self, kirby):
