@@ -1,10 +1,9 @@
 from pico2d import *
-
-# Game object class here
+from kirby import Kirby
+import game_world
 
 def handle_events():
     global running
-
     event_list = get_events()
     for event in event_list:
         if event.type == SDL_QUIT:
@@ -12,25 +11,22 @@ def handle_events():
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             running = False
         else:
-            pass
+            kirby.handle_event(event)
 
 def reset_world():
-    global world
-
-    world = []
+    global kirby
+    kirby = Kirby()
+    game_world.add_object(kirby, 1)
 
 def update_world():
-    for o in world:
-        o.update()
+    game_world.update()
 
 def render_world():
     clear_canvas()
-    for o in world:
-        o.draw()
+    game_world.render()
     update_canvas()
 
 running = True
-
 open_canvas()
 reset_world()
 
