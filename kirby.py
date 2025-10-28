@@ -9,7 +9,7 @@ SCALE = 3 # 배율
 
 class Kirby: #부모 클래스 커비
     def __init__(self):
-        self.x, self.y = 400, 90
+        self.x, self.y = 400, 58
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
@@ -64,10 +64,10 @@ class Idle: #커비 대기 상태
     def exit(self, e):
         pass
     def do(self):
-        self.kirby.frame = (self.kirby.frame + 1) % 2
+        self.kirby.frame = (self.kirby.frame + 1) % 4
     def draw(self):
         if self.kirby.face_dir == 1: # right
-            Idle.image.clip_draw(self.kirby.frame * 31, 0, 31, 39, self.kirby.x, self.kirby.y, 62, 78)
+            Idle.image.clip_draw(self.kirby.frame * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Down: #커비 앉기 상태
     def __init__(self, kirby):
