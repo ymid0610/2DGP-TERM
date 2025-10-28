@@ -7,7 +7,7 @@ import game_world
 import game_framework
 
 # 크기 배율 변수
-SCALE = 3 # 배율
+SCALE = 4 # 배율
 
 # 커비 걷기 속도
 PIXEL_PER_METER = (10.0 / 0.5)  # 10 Pixel 50 cm
@@ -33,10 +33,14 @@ def down_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
 def down_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
+def shift_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LSHIFT
+def shift_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LSHIFT
 
 class Kirby: #부모 클래스 커비
     def __init__(self):
-        self.x, self.y = 400, 58
+        self.x, self.y = 400, 90
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
@@ -74,9 +78,10 @@ class Kirby: #부모 클래스 커비
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {down_down: self.DOWN, right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK},
+                self.IDLE : {down_down: self.DOWN, down_up: self.DOWN, right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK, shift_down: self.DASH},
                 self.DOWN: {down_up: self.IDLE , right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK},
-                self.WALK: {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE}
+                self.WALK: {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE, shift_down: self.DASH, shift_up: self.IDLE, down_down: self.DOWN, down_up: self.IDLE},
+                self.DASH: {shift_up: self.WALK, right_up: self.IDLE, left_up: self.IDLE},
             }
         )
 
@@ -88,7 +93,7 @@ class Kirby: #부모 클래스 커비
         self.state_machine.draw()
         draw_rectangle(*self.get_bb())
     def get_bb(self):
-        return self.x - (10 * SCALE), self.y - (19 * SCALE), self.x + (10 * SCALE), self.y + (3 * SCALE)
+        return self.x - (11 * SCALE), self.y - (19 * SCALE), self.x + (11 * SCALE), self.y + (3 * SCALE)
 
 class Idle: #커비 대기 상태
     image = None
@@ -155,16 +160,23 @@ class Walk: #커비 걷기 상태
             Walk.image.clip_composite_draw((int(self.kirby.frame) % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Dash: #커비 대쉬 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if Dash.image == None:
+            Dash.image = load_image('Resource/Character/KirbyDash.png')
     def enter(self, e):
-        pass
+        self.kirby.dir = 3 * self.kirby.face_dir
     def exit(self, e):
-        pass
+        self.kirby.dir = self.kirby.face_dir
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
+        self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:  # right
+            Dash.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE,48 * SCALE)
+        else:  # face_dir == -1: # left
+            Dash.image.clip_composite_draw((int(self.kirby.frame) % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class IdleDashAttack: #커비 대쉬 공격 대기 상태
     def __init__(self, kirby):
