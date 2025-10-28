@@ -29,6 +29,10 @@ def left_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
 def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
+def down_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
+def down_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
 
 class Kirby: #부모 클래스 커비
     def __init__(self):
@@ -70,8 +74,8 @@ class Kirby: #부모 클래스 커비
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK},
-                self.DOWN: {},
+                self.IDLE : {down_down: self.DOWN, right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK},
+                self.DOWN: {down_up: self.IDLE , right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK},
                 self.WALK: {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE}
             }
         )
@@ -103,16 +107,24 @@ class Idle: #커비 대기 상태
             Idle.image.clip_composite_draw((Idle.pattern[int(self.kirby.frame)] % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Down: #커비 앉기 상태
+    image = None
+    pattern = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
     def __init__(self, kirby):
         self.kirby = kirby
+        if Down.image == None:
+            Down.image = load_image('Resource/Character/KirbyDown.png')
     def enter(self, e):
+        self.kirby.dir = 0
         pass
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Down.pattern)
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            Down.image.clip_draw(Down.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else:
+            Down.image.clip_composite_draw((Down.pattern[int(self.kirby.frame)] % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Walk: #커비 걷기 상태
     image = None
