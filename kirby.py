@@ -9,6 +9,18 @@ import game_framework
 # 크기 배율 변수
 SCALE = 3 # 배율
 
+# 커비 걷기 속도
+PIXEL_PER_METER = (10.0 / 0.5)  # 10 Pixel 50 cm
+WALK_SPEED_KPH = 10  # Km / Hour
+WALK_SPEED_MPM = (WALK_SPEED_KPH * 1000.0 / 60.0) # M / Minute
+WALK_SPEED_MPS = (WALK_SPEED_MPM / 60.0) # M / Second
+WALK_SPEED_PPS = (WALK_SPEED_MPS * PIXEL_PER_METER) # Pixel / Second
+
+# 커비 액션 속도
+TIME_PER_ACTION = 1 # 액션 초
+ACTION_PER_TIME = 1.0 / TIME_PER_ACTION # 초당 액션
+FRAMES_PER_ACTION = 16 # 액션당 프레임 수
+
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
 def right_up(e):
@@ -73,6 +85,7 @@ class Kirby: #부모 클래스 커비
 
 class Idle: #커비 대기 상태
     image = None
+    pattern = [0,1,2,0,1,2,0,1,2,0,1,2,3,3,3,3]
     def __init__(self, kirby):
         self.kirby = kirby
         if Idle.image == None:
@@ -82,12 +95,12 @@ class Idle: #커비 대기 상태
     def exit(self, e):
         pass
     def do(self):
-        self.kirby.frame = (self.kirby.frame + 1) % 4
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Idle.pattern)
     def draw(self):
         if self.kirby.face_dir == 1: # right
-            Idle.image.clip_draw(self.kirby.frame * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+            Idle.image.clip_draw(Idle.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
         else:
-            Idle.image.clip_composite_draw((int(self.kirby.frame) % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
+            Idle.image.clip_composite_draw((Idle.pattern[int(self.kirby.frame)] % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Down: #커비 앉기 상태
     def __init__(self, kirby):
@@ -115,7 +128,8 @@ class Walk: #커비 걷기 상태
     def exit(self, e):
         pass
     def do(self):
-        self.kirby.frame = (self.kirby.frame + 1) % 12
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 12
+        self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
     def draw(self):
         if self.kirby.face_dir == 1: # right
             Walk.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
