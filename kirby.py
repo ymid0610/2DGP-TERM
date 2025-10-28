@@ -86,6 +86,9 @@ class Kirby: #부모 클래스 커비
         self.state_machine.handle_state_event(('INPUT', event))
     def draw(self):
         self.state_machine.draw()
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return self.x - (10 * SCALE), self.y - (19 * SCALE), self.x + (10 * SCALE), self.y + (3 * SCALE)
 
 class Idle: #커비 대기 상태
     image = None
