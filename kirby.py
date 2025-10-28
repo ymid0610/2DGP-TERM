@@ -86,6 +86,8 @@ class Idle: #커비 대기 상태
     def draw(self):
         if self.kirby.face_dir == 1: # right
             Idle.image.clip_draw(self.kirby.frame * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else:
+            Idle.image.clip_composite_draw((int(self.kirby.frame) % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Down: #커비 앉기 상태
     def __init__(self, kirby):
@@ -106,14 +108,19 @@ class Walk: #커비 걷기 상태
         if Walk.image == None:
             Walk.image = load_image('Resource/Character/KirbyWalk.png')
     def enter(self, e):
-        pass
+        if right_down(e) or left_up(e):
+            self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e) or right_up(e):
+            self.kirby.dir = self.kirby.face_dir = -1
     def exit(self, e):
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + 1) % 12
     def draw(self):
         if self.kirby.face_dir == 1: # right
-            Walk.image.clip_draw(self.kirby.frame * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+            Walk.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else: # face_dir == -1: # left
+            Walk.image.clip_composite_draw((int(self.kirby.frame) % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Dash: #커비 대쉬 상태
     def __init__(self, kirby):
