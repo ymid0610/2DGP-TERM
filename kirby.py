@@ -128,6 +128,9 @@ class Down: #커비 앉기 상태
             Down.image.clip_draw(Down.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
         else:
             Down.image.clip_composite_draw((Down.pattern[int(self.kirby.frame)] % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return self.kirby.x - (12 * SCALE), self.kirby.y - (19 * SCALE), self.kirby.x + (12 * SCALE), self.kirby.y - (4 * SCALE)
 
 class Walk: #커비 걷기 상태
     image = None
