@@ -1,11 +1,22 @@
-from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT, SDLK_UP, SDLK_DOWN, SDLK_a, SDLK_s, SDLK_d
+from pico2d import *
+from sdl2 import *
 
 from state_machine import StateMachine
+
 import game_world
+import game_framework
 
 # 크기 배율 변수
 SCALE = 3 # 배율
+
+def right_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
+def right_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
+def left_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
+def left_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
 
 class Kirby: #부모 클래스 커비
     def __init__(self):
@@ -14,37 +25,44 @@ class Kirby: #부모 클래스 커비
         self.face_dir = 1
         self.dir = 0
 
-        self.Idle = Idle(self)
-        self.Down = Down(self)
-        self.Walk = Walk(self)
-        self.Dash = Dash(self)
-        self.IdleDashAttack = IdleDashAttack(self)
-        self.DashAttack = DashAttack(self)
-        self.IdleJump = IdleJump(self)
-        self.IdleRise = IdleRise(self)
-        self.Jump = Jump(self)
-        self.SpinAttack = SpinAttack(self)
-        self.IdleSuperJump = IdleSuperJump(self)
-        self.SuperJump = SuperJump(self)
-        self.EndSuperJump = EndSuperJump(self)
-        self.IdleFall = IdleFall(self)
-        self.Fall = Fall(self)
-        self.IdleLand = IdleLand(self)
-        self.IdleAttack = IdleAttack(self)
-        self.IdleSlashAttack = IdleSlashAttack(self)
-        self.SlashAttack = SlashAttack(self)
-        self.RapidAttack = RapidAttack(self)
-        self.IdleJumpAttack = IdleJumpAttack(self)
-        self.RiseJumpAttack = RiseJumpAttack(self)
-        self.JumpAttack = JumpAttack(self)
-        self.FallJumpAttack = FallJumpAttack(self)
-        self.EndJumpAttack = EndJumpAttack(self)
-        self.Hit = Hit(self)
-        self.IdleGuard = IdleGuard(self)
-        self.Guard = Guard(self)
-        self.Win = Win(self)
-        self.Star = Star(self)
-        self.state_machine = StateMachine(self.Walk, {})
+        self.IDLE = Idle(self)
+        self.DOWN = Down(self)
+        self.WALK = Walk(self)
+        self.DASH = Dash(self)
+        self.IDLE_DASH_ATTACK = IdleDashAttack(self)
+        self.DASH_ATTACK = DashAttack(self)
+        self.IDLE_JUMP = IdleJump(self)
+        self.IDLE_RISE = IdleRise(self)
+        self.JUMP = Jump(self)
+        self.SPIN_ATTACK = SpinAttack(self)
+        self.IDLE_SUPER_JUMP = IdleSuperJump(self)
+        self.SUPER_JUMP = SuperJump(self)
+        self.END_SUPER_JUMP = EndSuperJump(self)
+        self.IDLE_FALL = IdleFall(self)
+        self.FALL = Fall(self)
+        self.IDLE_LAND = IdleLand(self)
+        self.IDLE_ATTACK = IdleAttack(self)
+        self.IDLE_SLASH_ATTACK = IdleSlashAttack(self)
+        self.SLASH_ATTACK = SlashAttack(self)
+        self.RAPID_ATTACK = RapidAttack(self)
+        self.IDLE_JUMP_ATTACK = IdleJumpAttack(self)
+        self.RISE_JUMP_ATTACK = RiseJumpAttack(self)
+        self.JUMP_ATTACK = JumpAttack(self)
+        self.FALL_JUMP_ATTACK = FallJumpAttack(self)
+        self.END_JUMP_ATTACK = EndJumpAttack(self)
+        self.HIT = Hit(self)
+        self.IDLE_GUARD = IdleGuard(self)
+        self.GUARD = Guard(self)
+        self.WIN = Win(self)
+        self.STAR = Star(self)
+        self.state_machine = StateMachine(
+            self.IDLE,
+            {
+                self.IDLE : {right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK},
+                self.DOWN: {},
+                self.WALK: {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE}
+            }
+        )
 
     def update(self):
         self.state_machine.update()
