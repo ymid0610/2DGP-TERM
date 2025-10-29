@@ -21,6 +21,9 @@ TIME_PER_ACTION = 1 # 액션 초
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION # 초당 액션
 FRAMES_PER_ACTION = 16 # 액션당 프레임 수
 
+time_out = lambda e: e[0] == 'TIMEOUT'
+after_delay_time_out = lambda e: e[0] == 'AFTER_DELAY_TIMEOUT'
+
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
 def right_up(e):
@@ -33,10 +36,10 @@ def down_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
 def down_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
-def shift_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LSHIFT
-def shift_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LSHIFT
+def a_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_a
+def a_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_a
 
 class Kirby: #부모 클래스 커비
     def __init__(self):
@@ -78,10 +81,20 @@ class Kirby: #부모 클래스 커비
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {down_down: self.DOWN, down_up: self.DOWN, right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK, shift_down: self.DASH},
-                self.DOWN: {down_up: self.IDLE , right_down: self.WALK, left_down: self.WALK, right_up: self.WALK, left_up: self.WALK},
-                self.WALK: {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE, shift_down: self.DASH, shift_up: self.IDLE, down_down: self.DOWN, down_up: self.IDLE},
-                self.DASH: {shift_up: self.WALK, right_up: self.IDLE, left_up: self.IDLE},
+                self.IDLE : {right_down: self.WALK, left_down: self.WALK, down_down: self.DOWN,
+                             left_up: self.WALK, right_up: self.WALK},
+                self.DOWN: {right_down: self.WALK, left_down: self.WALK,
+                            right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
+                self.WALK: {right_up: self.IDLE, left_up: self.IDLE,
+                            right_down: self.IDLE, left_down: self.IDLE, time_out: self.DASH},
+                self.DASH: {right_down: self.IDLE, left_down: self.IDLE,
+                            left_up: self.IDLE, right_up: self.IDLE, a_down: self.IDLE_DASH_ATTACK},
+                self.IDLE_DASH_ATTACK: {time_out: self.DASH_ATTACK, after_delay_time_out: self.WALK,
+                                        left_down: self.IDLE, left_up: self.IDLE,
+                                        right_down: self.IDLE, right_up: self.IDLE},
+                self.DASH_ATTACK: {after_delay_time_out: self.IDLE_DASH_ATTACK,
+                                   left_down: self.IDLE, left_up: self.IDLE,
+                                   right_down: self.IDLE, right_up: self.IDLE},
             }
         )
 
@@ -144,6 +157,7 @@ class Walk: #커비 걷기 상태
         if Walk.image == None:
             Walk.image = load_image('Resource/Character/KirbyWalk.png')
     def enter(self, e):
+        self.kirby.wait_time = get_time()
         if right_down(e) or left_up(e):
             self.kirby.dir = self.kirby.face_dir = 1
         elif left_down(e) or right_up(e):
@@ -153,6 +167,8 @@ class Walk: #커비 걷기 상태
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 12
         self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        if get_time() - self.kirby.wait_time > 24 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1: # right
             Walk.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
@@ -168,7 +184,7 @@ class Dash: #커비 대쉬 상태
     def enter(self, e):
         self.kirby.dir = 3 * self.kirby.face_dir
     def exit(self, e):
-        self.kirby.dir = self.kirby.face_dir
+        pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
         self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
@@ -179,28 +195,55 @@ class Dash: #커비 대쉬 상태
             Dash.image.clip_composite_draw((int(self.kirby.frame) % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class IdleDashAttack: #커비 대쉬 공격 대기 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if IdleDashAttack.image == None:
+            IdleDashAttack.image = load_image('Resource/Character/KirbyIdleDashAttack.png')
     def enter(self, e):
-        pass
+        self.kirby.wait_time = get_time()
+        if a_down(e):
+            self.kirby.flag = 'TIMEOUT'
+        elif after_delay_time_out(e):
+            self.kirby.flag = 'AFTER_DELAY_TIMEOUT'
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 1
+        if get_time() - self.kirby.wait_time > 10 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            if self.kirby.flag == 'TIMEOUT':
+                self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+            elif self.kirby.flag == 'AFTER_DELAY_TIMEOUT':
+                self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            IdleDashAttack.image.clip_draw(0, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else:
+            IdleDashAttack.image.clip_composite_draw(0, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class DashAttack: #커비 대쉬 공격 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if DashAttack.image == None:
+            DashAttack.image = load_image('Resource/Character/KirbyDashAttack.png')
     def enter(self, e):
-        pass
+        self.kirby.wait_time = get_time()
+        self.kirby.flag = 'TIMEOUT'
+        self.kirby.dir = 5 * self.kirby.face_dir
     def exit(self, e):
-        pass
+        self.kirby.dir = self.kirby.face_dir
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
+        self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        if get_time() - self.kirby.wait_time > 20 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            if self.kirby.flag == 'TIMEOUT':
+                self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            DashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
+        else:
+            DashAttack.image.clip_composite_draw((int(self.kirby.frame) % 2) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y, 96 * SCALE, 48 * SCALE)
 
 class IdleJump: #커비 점프 대기 상태
     def __init__(self, kirby):
