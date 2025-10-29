@@ -19,7 +19,7 @@ WALK_SPEED_PPS = (WALK_SPEED_MPS * PIXEL_PER_METER) # Pixel / Second
 # 커비 액션 속도
 TIME_PER_ACTION = 1 # 액션 초
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION # 초당 액션
-FRAMES_PER_ACTION = 16 # 액션당 프레임 수
+FRAMES_PER_ACTION = 12 # 액션당 프레임 수
 
 time_out = lambda e: e[0] == 'TIMEOUT'
 after_delay_time_out = lambda e: e[0] == 'AFTER_DELAY_TIMEOUT'
@@ -32,6 +32,10 @@ def left_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
 def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
+def up_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_UP
+def up_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_UP
 def down_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
 def down_up(e):
@@ -81,8 +85,8 @@ class Kirby: #부모 클래스 커비
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {right_down: self.WALK, left_down: self.WALK, down_down: self.DOWN,
-                             left_up: self.WALK, right_up: self.WALK},
+                self.IDLE : {right_down: self.WALK, left_down: self.WALK, left_up: self.WALK, right_up: self.WALK,
+                             down_down: self.DOWN, up_down: self.IDLE_JUMP},
                 self.DOWN: {right_down: self.WALK, left_down: self.WALK,
                             right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
                 self.WALK: {right_up: self.IDLE, left_up: self.IDLE,
@@ -95,6 +99,7 @@ class Kirby: #부모 클래스 커비
                 self.DASH_ATTACK: {after_delay_time_out: self.IDLE_DASH_ATTACK,
                                    left_down: self.IDLE, left_up: self.IDLE,
                                    right_down: self.IDLE, right_up: self.IDLE},
+                self.IDLE_JUMP: {},
             }
         )
 
@@ -246,16 +251,23 @@ class DashAttack: #커비 대쉬 공격 상태
             DashAttack.image.clip_composite_draw((int(self.kirby.frame) % 2) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y, 96 * SCALE, 48 * SCALE)
 
 class IdleJump: #커비 점프 대기 상태
+    image = None
+    pattern = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
     def __init__(self, kirby):
         self.kirby = kirby
+        if IdleJump.image == None:
+            IdleJump.image = load_image('Resource/Character/KirbyIdleJump.png')
     def enter(self, e):
         pass
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Down.pattern)
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            IdleJump.image.clip_draw(IdleJump.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else:
+            IdleJump.image.clip_composite_draw(IdleJump.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class IdleRise: #커비 점프 상승 상태
     def __init__(self, kirby):
