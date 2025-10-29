@@ -100,7 +100,7 @@ class Kirby: #부모 클래스 커비
                                    left_down: self.IDLE, left_up: self.IDLE,
                                    right_down: self.IDLE, right_up: self.IDLE},
                 self.IDLE_JUMP: {time_out: self.IDLE_RISE},
-                self.IDLE_RISE: {},
+                self.IDLE_RISE: {left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE},
             }
         )
 
@@ -279,16 +279,36 @@ class IdleRise: #커비 점프 상승 상태
         if IdleRise.image == None:
             IdleRise.image = load_image('Resource/Character/KirbyIdleRise.png')
     def enter(self, e):
-        pass
+        self.kirby.dir = self.kirby.face_dir
+        if right_up(e) or left_up(e):
+            if self.kirby.flag == 'LEFT' and right_up(e):
+                pass
+            elif self.kirby.flag == 'RIGHT' and left_up(e):
+                pass
+            else:
+                self.kirby.flag = 'IDLE'
+        elif right_down(e):
+            self.kirby.flag = 'RIGHT'
+        elif left_down(e):
+            self.kirby.flag = 'LEFT'
+        else:
+            self.kirby.flag = 'IDLE'
     def exit(self, e):
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
+        self.kirby.y += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        if self.kirby.flag == 'RIGHT':
+            self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        elif self.kirby.flag == 'LEFT':
+            self.kirby.x -= self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        else:
+            pass
     def draw(self):
         if self.kirby.face_dir == 1:
-            IdleRise.image.clip_draw(0, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+            IdleRise.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
         else:
-            IdleRise.image.clip_composite_draw(0, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
+            IdleRise.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Jump: #커비 점프 상태 (공중제비 애니메이션)
     def __init__(self, kirby):
