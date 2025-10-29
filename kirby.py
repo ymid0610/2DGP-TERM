@@ -99,7 +99,8 @@ class Kirby: #부모 클래스 커비
                 self.DASH_ATTACK: {after_delay_time_out: self.IDLE_DASH_ATTACK,
                                    left_down: self.IDLE, left_up: self.IDLE,
                                    right_down: self.IDLE, right_up: self.IDLE},
-                self.IDLE_JUMP: {},
+                self.IDLE_JUMP: {time_out: self.IDLE_RISE},
+                self.IDLE_RISE: {},
             }
         )
 
@@ -258,11 +259,13 @@ class IdleJump: #커비 점프 대기 상태
         if IdleJump.image == None:
             IdleJump.image = load_image('Resource/Character/KirbyIdleJump.png')
     def enter(self, e):
-        pass
+        self.kirby.wait_time = get_time()
     def exit(self, e):
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Down.pattern)
+        if get_time() - self.kirby.wait_time > 24 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
             IdleJump.image.clip_draw(IdleJump.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
