@@ -215,7 +215,7 @@ class IdleDashAttack: #커비 대쉬 공격 대기 상태
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 1
-        if get_time() - self.kirby.wait_time > 10 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+        if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
             if self.kirby.flag == 'TIMEOUT':
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
             elif self.kirby.flag == 'AFTER_DELAY_TIMEOUT':
@@ -241,7 +241,7 @@ class DashAttack: #커비 대쉬 공격 상태
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
         self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
-        if get_time() - self.kirby.wait_time > 20 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+        if get_time() - self.kirby.wait_time > 24 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
             if self.kirby.flag == 'TIMEOUT':
                 self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
     def draw(self):
@@ -270,16 +270,22 @@ class IdleJump: #커비 점프 대기 상태
             IdleJump.image.clip_composite_draw(IdleJump.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class IdleRise: #커비 점프 상승 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if IdleRise.image == None:
+            IdleRise.image = load_image('Resource/Character/KirbyIdleRise.png')
     def enter(self, e):
         pass
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            IdleRise.image.clip_draw(0, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else:
+            IdleRise.image.clip_composite_draw(0, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Jump: #커비 점프 상태 (공중제비 애니메이션)
     def __init__(self, kirby):
