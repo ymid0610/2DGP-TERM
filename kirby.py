@@ -648,16 +648,24 @@ class IdleAttack: #커비 공격 대기 상태
         pass
 
 class IdleSlashAttack: #커비 베기 공격 대기 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if IdleSlashAttack.image == None:
+            IdleSlashAttack.image = load_image('Resource/Character/KirbyIdleSlashAttack.png')
     def enter(self, e):
-        pass
+        self.kirby.wait_time = get_time()
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 5
+        if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            IdleSlashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
+        else:
+            IdleSlashAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y, 96 * SCALE, 48 * SCALE)
 
 class SlashAttack: #커비 베기 공격 상태
     def __init__(self, kirby):
