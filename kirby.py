@@ -112,7 +112,9 @@ class Kirby: #부모 클래스 커비
                                    left_down: self.IDLE, left_up: self.IDLE,
                                    right_down: self.IDLE, right_up: self.IDLE},
                 self.IDLE_JUMP: {time_out: self.IDLE_RISE},
-                self.IDLE_RISE: {left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE},
+                self.IDLE_RISE: {left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
+                                 time_out: self.JUMP},
+                self.JUMP: {},
             }
         )
 
@@ -332,16 +334,24 @@ class IdleRise: #커비 점프 상승 상태
             IdleRise.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Jump: #커비 점프 상태 (공중제비 애니메이션)
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if Jump.image == None:
+            Jump.image = load_image('Resource/Character/KirbyJump.png')
     def enter(self, e):
-        pass
+        self.kirby.wait_time = get_time()
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 7
+        if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            Jump.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 96, self.kirby.x, self.kirby.y, 48 * SCALE, 96 * SCALE)
+        else:
+            Jump.image.clip_composite_draw((int(self.kirby.frame) % 7) * 48, 0, 48, 96, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 96 * SCALE)
 
 class SpinAttack: #커비 공중베기 공격 상태
     def __init__(self, kirby):
