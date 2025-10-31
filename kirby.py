@@ -64,6 +64,7 @@ class Kirby: #부모 클래스 커비
         self.face_dir = 1
         self.dir = 0
         self.flag = None
+        self.vy= 0.0
 
         self.IDLE = Idle(self)
         self.DOWN = Down(self)
@@ -115,9 +116,11 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_JUMP: {left_down: self.IDLE_JUMP, right_down: self.IDLE_JUMP, left_up: self.IDLE_JUMP, right_up: self.IDLE_JUMP,
                                  time_out: self.IDLE_RISE},
                 self.IDLE_RISE: {left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
-                                 time_out: self.JUMP},
+                                 time_out: self.JUMP, a_down: self.SPIN_ATTACK},
                 self.JUMP: {left_down: self.JUMP, right_down: self.JUMP, left_up: self.JUMP, right_up: self.JUMP,
-                            time_out: self.IDLE_FALL},
+                            time_out: self.IDLE_FALL, a_down: self.SPIN_ATTACK},
+                self.SPIN_ATTACK: {left_down: self.SPIN_ATTACK, right_down: self.SPIN_ATTACK, left_up: self.SPIN_ATTACK, right_up: self.SPIN_ATTACK,
+                                   time_out: self.IDLE_FALL},
                 self.IDLE_FALL: {left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE},
             }
@@ -341,7 +344,6 @@ class IdleRise: #커비 점프 상승 상태
         self.kirby = kirby
         if IdleRise.image == None:
             IdleRise.image = load_image('Resource/Character/KirbyIdleRise.png')
-        self.vy = 0.0
     def enter(self, e):
         if right_up(e) or left_up(e):
             if self.kirby.flag == 'LEFT' and right_up(e): # 왼쪽 키다운
@@ -373,7 +375,7 @@ class IdleRise: #커비 점프 상승 상태
                 self.kirby.flag = 'LEFT'
                 self.kirby.dir = self.kirby.face_dir = -1
         else: # 최초 진입
-            self.vy = JUMP_SPEED_PPS
+            self.kirby.vy = JUMP_SPEED_PPS
             if self.kirby.dir >= 1: # 오른쪽 걷기+대쉬 상태
                 self.kirby.flag = 'RIGHT'
             elif self.kirby.dir <= -1: # 왼쪽 걷기+대쉬 상태
@@ -384,11 +386,11 @@ class IdleRise: #커비 점프 상승 상태
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
-        self.kirby.y += self.vy * game_framework.frame_time
-        self.vy -= GRAVITY_PPS * game_framework.frame_time
+        self.kirby.y += self.kirby.vy * game_framework.frame_time
+        self.kirby.vy -= GRAVITY_PPS * game_framework.frame_time
         if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
             self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
-        if self.vy <= 0:
+        if self.kirby.vy <= 0:
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
 
     def draw(self):
@@ -454,16 +456,65 @@ class Jump: #커비 점프 상태 (공중제비 애니메이션)
             Jump.image.clip_composite_draw((int(self.kirby.frame) % 7) * 48, 0, 48, 96, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 96 * SCALE)
 
 class SpinAttack: #커비 공중베기 공격 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if SpinAttack.image == None:
+            SpinAttack.image = load_image('Resource/Character/KirbySpinAttack.png')
     def enter(self, e):
-        pass
+        if right_up(e) or left_up(e):
+            if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = -1  # 왼쪽 이동 상태 + 왼쪽 이동
+            elif self.kirby.flag == 'RIGHT' and left_up(e):  # 오른쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = 1  # 오른쪽 이동 상태 + 오른쪽 이동
+            elif self.kirby.flag == 'IDLE':  # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                    self.kirby.dir = self.kirby.face_dir = -1
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+            else:  # 키다운 없음
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+        elif right_down(e):
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'RIGHT'
+                self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'LEFT'
+                self.kirby.dir = self.kirby.face_dir = -1
+        else:  # 최초 진입
+            self.kirby.wait_time = get_time()
+            if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
+                self.kirby.flag = 'LEFT'
+            else:  # 정지 상태
+                self.kirby.flag = 'IDLE'
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + 2 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
+        if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
+            self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        if get_time() - self.kirby.wait_time > 24 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            SpinAttack.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else:
+            SpinAttack.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return self.kirby.x - (48 * SCALE / 2), self.kirby.y - (48 * SCALE / 2), self.kirby.x + (48 * SCALE / 2), self.kirby.y + (48 * SCALE / 2)
 
 class IdleSuperJump:  # 커비 슈퍼 점프 대기 상태
     def __init__(self, kirby):
@@ -507,7 +558,6 @@ class IdleFall: #커비 점프 낙하 상태
         self.kirby = kirby
         if IdleFall.image == None:
             IdleFall.image = load_image('Resource/Character/KirbyIdleFall.png')
-        self.vy = 0.0
     def enter(self, e):
         if right_up(e) or left_up(e):
             if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
@@ -539,7 +589,6 @@ class IdleFall: #커비 점프 낙하 상태
                 self.kirby.flag = 'LEFT'
                 self.kirby.dir = self.kirby.face_dir = -1
         else:  # 위쪽 키 진입
-            self.vy = 0.0
             if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
                 self.kirby.flag = 'RIGHT'
             elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
@@ -550,11 +599,11 @@ class IdleFall: #커비 점프 낙하 상태
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
-        self.kirby.y -= self.vy * game_framework.frame_time
-        self.vy += GRAVITY_PPS * game_framework.frame_time
+        self.kirby.y -= self.kirby.vy * game_framework.frame_time
+        self.kirby.vy += GRAVITY_PPS * game_framework.frame_time
         if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
             self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
-        if self.vy >= JUMP_SPEED_PPS:
+        if self.kirby.vy >= JUMP_SPEED_PPS:
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
