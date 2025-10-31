@@ -63,6 +63,7 @@ class Kirby: #부모 클래스 커비
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
+        self.flag = None
 
         self.IDLE = Idle(self)
         self.DOWN = Down(self)
@@ -98,7 +99,7 @@ class Kirby: #부모 클래스 커비
             self.IDLE,
             {
                 self.IDLE : {right_down: self.WALK, left_down: self.WALK, left_up: self.WALK, right_up: self.WALK,
-                             down_down: self.DOWN, up_down: self.IDLE_JUMP},
+                             down_down: self.DOWN, up_down: self.IDLE_JUMP, time_out: self.WALK},
                 self.DOWN: {right_down: self.WALK, left_down: self.WALK,
                             right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
                 self.WALK: {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
@@ -111,11 +112,14 @@ class Kirby: #부모 클래스 커비
                 self.DASH_ATTACK: {after_delay_time_out: self.IDLE_DASH_ATTACK,
                                    left_down: self.IDLE, left_up: self.IDLE,
                                    right_down: self.IDLE, right_up: self.IDLE},
-                self.IDLE_JUMP: {time_out: self.IDLE_RISE},
+                self.IDLE_JUMP: {left_down: self.IDLE_JUMP, right_down: self.IDLE_JUMP, left_up: self.IDLE_JUMP, right_up: self.IDLE_JUMP,
+                                 time_out: self.IDLE_RISE},
                 self.IDLE_RISE: {left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
                                  time_out: self.JUMP},
-                self.JUMP: {time_out: self.IDLE_FALL},
-                self.IDLE_FALL: {time_out: self.IDLE},
+                self.JUMP: {left_down: self.JUMP, right_down: self.JUMP, left_up: self.JUMP, right_up: self.JUMP,
+                            time_out: self.IDLE_FALL},
+                self.IDLE_FALL: {left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
+                                 time_out: self.IDLE},
             }
         )
 
@@ -137,11 +141,17 @@ class Idle: #커비 대기 상태
         if Idle.image == None:
             Idle.image = load_image('Resource/Character/KirbyIdle.png')
     def enter(self, e):
-        self.kirby.dir = 0
+        if time_out(e):
+            pass
+        else:
+            self.kirby.dir = 0
     def exit(self, e):
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Idle.pattern)
+        if self.kirby.flag == 'LEFT' or self.kirby.flag == 'RIGHT':
+            self.kirby.flag = None
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1: # right
             Idle.image.clip_draw(Idle.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
@@ -183,6 +193,8 @@ class Walk: #커비 걷기 상태
             self.kirby.dir = self.kirby.face_dir = 1
         elif left_down(e) or right_up(e):
             self.kirby.dir = self.kirby.face_dir = -1
+        else:
+            self.kirby.dir = self.kirby.face_dir
     def exit(self, e):
         pass
     def do(self):
@@ -274,7 +286,43 @@ class IdleJump: #커비 점프 대기 상태
         if IdleJump.image == None:
             IdleJump.image = load_image('Resource/Character/KirbyIdleJump.png')
     def enter(self, e):
-        self.kirby.wait_time = get_time()
+        if right_up(e) or left_up(e):
+            if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = -1  # 왼쪽 이동 상태 + 왼쪽 이동
+            elif self.kirby.flag == 'RIGHT' and left_up(e):  # 오른쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = 1  # 오른쪽 이동 상태 + 오른쪽 이동
+            elif self.kirby.flag == 'IDLE':  # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                    self.kirby.dir = self.kirby.face_dir = -1
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+            else:  # 키다운 없음
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+        elif right_down(e):
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'RIGHT'
+                self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'LEFT'
+                self.kirby.dir = self.kirby.face_dir = -1
+        else:  # 최초 진입
+            self.kirby.wait_time = get_time()
+            if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
+                self.kirby.flag = 'LEFT'
+            else:  # 정지 상태
+                self.kirby.flag = 'IDLE'
     def exit(self, e):
         pass
     def do(self):
@@ -296,26 +344,41 @@ class IdleRise: #커비 점프 상승 상태
         self.vy = 0.0
     def enter(self, e):
         if right_up(e) or left_up(e):
-            if self.kirby.flag == 'LEFT' and right_up(e):
-                self.kirby.dir = self.kirby.face_dir = -1
-            elif self.kirby.flag == 'RIGHT' and left_up(e):
-                self.kirby.dir = self.kirby.face_dir = 1
-            else:
-                self.kirby.flag = 'IDLE'
-                self.kirby.dir = self.kirby.face_dir
+            if self.kirby.flag == 'LEFT' and right_up(e): # 왼쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = -1  # 왼쪽 이동 상태 + 왼쪽 이동
+            elif self.kirby.flag == 'RIGHT' and left_up(e): # 오른쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = 1 # 오른쪽 이동 상태 + 오른쪽 이동
+            elif self.kirby.flag == 'IDLE': # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                    self.kirby.dir = self.kirby.face_dir = -1
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+            else: # 키다운 없음
+                self.kirby.flag = 'IDLE' # 정지 상태 변경
+                self.kirby.dir = 0
         elif right_down(e):
-            self.kirby.flag = 'RIGHT'
-            self.kirby.dir = self.kirby.face_dir = 1
-        elif left_down(e):
-            self.kirby.flag = 'LEFT'
-            self.kirby.dir = self.kirby.face_dir = -1
-        else:
-            self.vy = JUMP_SPEED_PPS
-            if self.kirby.dir >= 1:
+            if self.kirby.flag == 'LEFT': # 왼쪽 키다운
+                self.kirby.flag = 'IDLE' # 정지 상태 변경
+                self.kirby.dir = 0
+            else: # 키다운 없음
                 self.kirby.flag = 'RIGHT'
-            elif self.kirby.dir <= -1:
+                self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e):
+            if self.kirby.flag == 'RIGHT': # 오른쪽 키다운
+                self.kirby.flag = 'IDLE' # 정지 상태 변경
+                self.kirby.dir = 0
+            else: # 키다운 없음
                 self.kirby.flag = 'LEFT'
-            else:
+                self.kirby.dir = self.kirby.face_dir = -1
+        else: # 최초 진입
+            self.vy = JUMP_SPEED_PPS
+            if self.kirby.dir >= 1: # 오른쪽 걷기+대쉬 상태
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.dir <= -1: # 왼쪽 걷기+대쉬 상태
+                self.kirby.flag = 'LEFT'
+            else: # 정지 상태
                 self.kirby.flag = 'IDLE'
     def exit(self, e):
         pass
@@ -341,7 +404,43 @@ class Jump: #커비 점프 상태 (공중제비 애니메이션)
         if Jump.image == None:
             Jump.image = load_image('Resource/Character/KirbyJump.png')
     def enter(self, e):
-        self.kirby.wait_time = get_time()
+        if right_up(e) or left_up(e):
+            if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = -1  # 왼쪽 이동 상태 + 왼쪽 이동
+            elif self.kirby.flag == 'RIGHT' and left_up(e):  # 오른쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = 1  # 오른쪽 이동 상태 + 오른쪽 이동
+            elif self.kirby.flag == 'IDLE':  # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                    self.kirby.dir = self.kirby.face_dir = -1
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+            else:  # 키다운 없음
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+        elif right_down(e):
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'RIGHT'
+                self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'LEFT'
+                self.kirby.dir = self.kirby.face_dir = -1
+        else:  # 최초 진입
+            self.kirby.wait_time = get_time()
+            if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
+                self.kirby.flag = 'LEFT'
+            else:  # 정지 상태
+                self.kirby.flag = 'IDLE'
     def exit(self, e):
         pass
     def do(self):
@@ -411,26 +510,41 @@ class IdleFall: #커비 점프 낙하 상태
         self.vy = 0.0
     def enter(self, e):
         if right_up(e) or left_up(e):
-            if self.kirby.flag == 'LEFT' and right_up(e):
-                self.kirby.dir = self.kirby.face_dir = -1
-            elif self.kirby.flag == 'RIGHT' and left_up(e):
-                self.kirby.dir = self.kirby.face_dir = 1
-            else:
-                self.kirby.flag = 'IDLE'
-                self.kirby.dir = self.kirby.face_dir
+            if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = -1  # 왼쪽 이동 상태 + 왼쪽 이동
+            elif self.kirby.flag == 'RIGHT' and left_up(e):  # 오른쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = 1  # 오른쪽 이동 상태 + 오른쪽 이동
+            elif self.kirby.flag == 'IDLE':  # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                    self.kirby.dir = self.kirby.face_dir = -1
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+            else:  # 키다운 없음
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
         elif right_down(e):
-            self.kirby.flag = 'RIGHT'
-            self.kirby.dir = self.kirby.face_dir = 1
-        elif left_down(e):
-            self.kirby.flag = 'LEFT'
-            self.kirby.dir = self.kirby.face_dir = -1
-        else:
-            self.vy = 0.0
-            if self.kirby.dir >= 1:
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
                 self.kirby.flag = 'RIGHT'
-            elif self.kirby.dir <= -1:
+                self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
                 self.kirby.flag = 'LEFT'
-            else:
+                self.kirby.dir = self.kirby.face_dir = -1
+        else:  # 위쪽 키 진입
+            self.vy = 0.0
+            if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
+                self.kirby.flag = 'LEFT'
+            else:  # 정지 상태
                 self.kirby.flag = 'IDLE'
     def exit(self, e):
         pass
