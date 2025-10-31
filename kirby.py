@@ -9,12 +9,24 @@ import game_framework
 # 크기 배율 변수
 SCALE = 4 # 배율
 
-# 커비 걷기 속도
+# 픽셀-미터 변환 변수
 PIXEL_PER_METER = (10.0 / 0.5)  # 10 Pixel 50 cm
+
+# 커비 걷기 속도
 WALK_SPEED_KPH = 10  # Km / Hour
 WALK_SPEED_MPM = (WALK_SPEED_KPH * 1000.0 / 60.0) # M / Minute
 WALK_SPEED_MPS = (WALK_SPEED_MPM / 60.0) # M / Second
 WALK_SPEED_PPS = (WALK_SPEED_MPS * PIXEL_PER_METER) # Pixel / Second
+
+# 커비 점프 속도
+JUMP_SPEED_KPH = 50  # Km / Hour
+JUMP_SPEED_MPM = (JUMP_SPEED_KPH * 1000.0 / 60.0) # M / Minute
+JUMP_SPEED_MPS = (JUMP_SPEED_MPM / 60.0) # M / Second
+JUMP_SPEED_PPS = (JUMP_SPEED_MPS * PIXEL_PER_METER) # Pixel / Second
+
+# 중력
+GRAVITY = 9.8 # m/s^2
+GRAVITY_PPS = GRAVITY * PIXEL_PER_METER
 
 # 커비 액션 속도
 TIME_PER_ACTION = 1 # 액션 초
@@ -89,10 +101,10 @@ class Kirby: #부모 클래스 커비
                              down_down: self.DOWN, up_down: self.IDLE_JUMP},
                 self.DOWN: {right_down: self.WALK, left_down: self.WALK,
                             right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
-                self.WALK: {right_up: self.IDLE, left_up: self.IDLE,
-                            right_down: self.IDLE, left_down: self.IDLE, time_out: self.DASH},
-                self.DASH: {right_down: self.IDLE, left_down: self.IDLE,
-                            left_up: self.IDLE, right_up: self.IDLE, a_down: self.IDLE_DASH_ATTACK},
+                self.WALK: {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
+                            time_out: self.DASH, up_down: self.IDLE_JUMP},
+                self.DASH: {right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
+                            a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP},
                 self.IDLE_DASH_ATTACK: {time_out: self.DASH_ATTACK, after_delay_time_out: self.WALK,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
@@ -278,32 +290,41 @@ class IdleRise: #커비 점프 상승 상태
         self.kirby = kirby
         if IdleRise.image == None:
             IdleRise.image = load_image('Resource/Character/KirbyIdleRise.png')
+        self.vy = 0.0
     def enter(self, e):
-        self.kirby.dir = self.kirby.face_dir
         if right_up(e) or left_up(e):
             if self.kirby.flag == 'LEFT' and right_up(e):
-                pass
+                self.kirby.dir = self.kirby.face_dir = -1
             elif self.kirby.flag == 'RIGHT' and left_up(e):
-                pass
+                self.kirby.dir = self.kirby.face_dir = 1
             else:
                 self.kirby.flag = 'IDLE'
+                self.kirby.dir = self.kirby.face_dir
         elif right_down(e):
             self.kirby.flag = 'RIGHT'
+            self.kirby.dir = self.kirby.face_dir = 1
         elif left_down(e):
             self.kirby.flag = 'LEFT'
+            self.kirby.dir = self.kirby.face_dir = -1
         else:
-            self.kirby.flag = 'IDLE'
+            self.vy = JUMP_SPEED_PPS
+            if self.kirby.dir >= 1:
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.dir <= -1:
+                self.kirby.flag = 'LEFT'
+            else:
+                self.kirby.flag = 'IDLE'
     def exit(self, e):
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
-        self.kirby.y += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
-        if self.kirby.flag == 'RIGHT':
+        self.kirby.y += self.vy * game_framework.frame_time
+        self.vy -= GRAVITY_PPS * game_framework.frame_time
+        if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
             self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
-        elif self.kirby.flag == 'LEFT':
-            self.kirby.x -= self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
-        else:
-            pass
+        if self.vy <= 0:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+
     def draw(self):
         if self.kirby.face_dir == 1:
             IdleRise.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
