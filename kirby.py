@@ -61,10 +61,10 @@ def a_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_a
 
 # 더블탭 이벤트 판정용 함수
-def double_tap_right(e):
+def right_double_tap(e):
     return e[0] == 'DOUBLE_TAP' and e[1] == 'RIGHT'
 
-def double_tap_left(e):
+def left_double_tap(e):
     return e[0] == 'DOUBLE_TAP' and e[1] == 'LEFT'
 
 class Kirby: #부모 클래스 커비
@@ -111,11 +111,11 @@ class Kirby: #부모 클래스 커비
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {double_tap_right: self.DASH, double_tap_left: self.DASH, right_down: self.WALK, left_down: self.WALK, left_up: self.WALK, right_up: self.WALK,
+                self.IDLE : {right_double_tap: self.DASH, left_double_tap: self.DASH, right_down: self.WALK, left_down: self.WALK, left_up: self.WALK, right_up: self.WALK,
                              down_down: self.DOWN, up_down: self.IDLE_JUMP, time_out: self.WALK},
                 self.DOWN: {right_down: self.WALK, left_down: self.WALK,
                             right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
-                self.WALK: {double_tap_right: self.IDLE, double_tap_left: self.IDLE, right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
+                self.WALK: {right_double_tap: self.IDLE, left_double_tap: self.IDLE, right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
                             time_out: self.DASH, up_down: self.IDLE_JUMP},
                 self.DASH: {right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
                             a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP},
@@ -125,15 +125,15 @@ class Kirby: #부모 클래스 커비
                 self.DASH_ATTACK: {after_delay_time_out: self.IDLE_DASH_ATTACK,
                                    left_down: self.IDLE, left_up: self.IDLE,
                                    right_down: self.IDLE, right_up: self.IDLE},
-                self.IDLE_JUMP: {left_down: self.IDLE_JUMP, right_down: self.IDLE_JUMP, left_up: self.IDLE_JUMP, right_up: self.IDLE_JUMP,
+                self.IDLE_JUMP: {left_double_tap: self.IDLE_JUMP, right_double_tap: self.IDLE_JUMP, left_down: self.IDLE_JUMP, right_down: self.IDLE_JUMP, left_up: self.IDLE_JUMP, right_up: self.IDLE_JUMP,
                                  time_out: self.IDLE_RISE},
-                self.IDLE_RISE: {left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
+                self.IDLE_RISE: {left_double_tap: self.IDLE_RISE, right_double_tap: self.IDLE_RISE, left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
                                  time_out: self.JUMP, a_down: self.SPIN_ATTACK},
-                self.JUMP: {left_down: self.JUMP, right_down: self.JUMP, left_up: self.JUMP, right_up: self.JUMP,
+                self.JUMP: {left_double_tap: self.JUMP, right_double_tap: self.JUMP, left_down: self.JUMP, right_down: self.JUMP, left_up: self.JUMP, right_up: self.JUMP,
                             time_out: self.IDLE_FALL, a_down: self.SPIN_ATTACK},
-                self.SPIN_ATTACK: {left_down: self.SPIN_ATTACK, right_down: self.SPIN_ATTACK, left_up: self.SPIN_ATTACK, right_up: self.SPIN_ATTACK,
+                self.SPIN_ATTACK: {left_double_tap: self.SPIN_ATTACK, right_double_tap: self.SPIN_ATTACK, left_down: self.SPIN_ATTACK, right_down: self.SPIN_ATTACK, left_up: self.SPIN_ATTACK, right_up: self.SPIN_ATTACK,
                                    time_out: self.IDLE_FALL},
-                self.IDLE_FALL: {left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
+                self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL, left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE},
             }
         )
@@ -337,14 +337,14 @@ class IdleJump: #커비 점프 대기 상태
             else:  # 키다운 없음
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
-        elif right_down(e):
+        elif right_down(e) or right_double_tap(e):
             if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
             else:  # 키다운 없음
                 self.kirby.flag = 'RIGHT'
                 self.kirby.dir = self.kirby.face_dir = 1
-        elif left_down(e):
+        elif left_down(e) or left_double_tap(e):
             if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
@@ -393,18 +393,18 @@ class IdleRise: #커비 점프 상승 상태
             else: # 키다운 없음
                 self.kirby.flag = 'IDLE' # 정지 상태 변경
                 self.kirby.dir = 0
-        elif right_down(e):
-            if self.kirby.flag == 'LEFT': # 왼쪽 키다운
-                self.kirby.flag = 'IDLE' # 정지 상태 변경
+        elif right_down(e) or right_double_tap(e):
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                    self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                    self.kirby.dir = 0
+            else:  # 키다운 없음
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e) or left_double_tap(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
-            else: # 키다운 없음
-                self.kirby.flag = 'RIGHT'
-                self.kirby.dir = self.kirby.face_dir = 1
-        elif left_down(e):
-            if self.kirby.flag == 'RIGHT': # 오른쪽 키다운
-                self.kirby.flag = 'IDLE' # 정지 상태 변경
-                self.kirby.dir = 0
-            else: # 키다운 없음
+            else:  # 키다운 없음
                 self.kirby.flag = 'LEFT'
                 self.kirby.dir = self.kirby.face_dir = -1
         else: # 최초 진입
@@ -454,14 +454,14 @@ class Jump: #커비 점프 상태 (공중제비 애니메이션)
             else:  # 키다운 없음
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
-        elif right_down(e):
+        elif right_down(e) or right_double_tap(e):
             if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
-                self.kirby.flag = 'IDLE'  # 정지 상태 변경
-                self.kirby.dir = 0
+                    self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                    self.kirby.dir = 0
             else:  # 키다운 없음
-                self.kirby.flag = 'RIGHT'
-                self.kirby.dir = self.kirby.face_dir = 1
-        elif left_down(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e) or left_double_tap(e):
             if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
@@ -510,14 +510,14 @@ class SpinAttack: #커비 공중베기 공격 상태
             else:  # 키다운 없음
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
-        elif right_down(e):
+        elif right_down(e) or right_double_tap(e):
             if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
             else:  # 키다운 없음
                 self.kirby.flag = 'RIGHT'
                 self.kirby.dir = self.kirby.face_dir = 1
-        elif left_down(e):
+        elif left_down(e) or left_double_tap(e):
             if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
@@ -607,14 +607,14 @@ class IdleFall: #커비 점프 낙하 상태
             else:  # 키다운 없음
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
-        elif right_down(e):
+        elif right_down(e) or right_double_tap(e):
             if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
-                self.kirby.flag = 'IDLE'  # 정지 상태 변경
-                self.kirby.dir = 0
+                    self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                    self.kirby.dir = 0
             else:  # 키다운 없음
-                self.kirby.flag = 'RIGHT'
-                self.kirby.dir = self.kirby.face_dir = 1
-        elif left_down(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e) or left_double_tap(e):
             if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
                 self.kirby.flag = 'IDLE'  # 정지 상태 변경
                 self.kirby.dir = 0
