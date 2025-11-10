@@ -33,6 +33,9 @@ TIME_PER_ACTION = 1 # 액션 초
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION # 초당 액션
 FRAMES_PER_ACTION = 12 # 액션당 프레임 수
 
+# 더블탭 허용 시간 (초)
+DOUBLE_TAP_TIME = 0.25
+
 time_out = lambda e: e[0] == 'TIMEOUT'
 after_delay_time_out = lambda e: e[0] == 'AFTER_DELAY_TIMEOUT'
 
@@ -57,6 +60,13 @@ def a_down(e):
 def a_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_a
 
+# 더블탭 이벤트 판정용 함수
+def double_tap_right(e):
+    return e[0] == 'DOUBLE_TAP' and e[1] == 'RIGHT'
+
+def double_tap_left(e):
+    return e[0] == 'DOUBLE_TAP' and e[1] == 'LEFT'
+
 class Kirby: #부모 클래스 커비
     def __init__(self):
         self.x, self.y = 400, 90
@@ -65,6 +75,8 @@ class Kirby: #부모 클래스 커비
         self.dir = 0
         self.flag = None
         self.vy= 0.0
+        # 더블탭 기록 초기화
+        self._last_tap = {'RIGHT': 0.0, 'LEFT': 0.0}
 
         self.IDLE = Idle(self)
         self.DOWN = Down(self)
@@ -99,11 +111,11 @@ class Kirby: #부모 클래스 커비
         self.state_machine = StateMachine(
             self.IDLE,
             {
-                self.IDLE : {right_down: self.WALK, left_down: self.WALK, left_up: self.WALK, right_up: self.WALK,
+                self.IDLE : {double_tap_right: self.DASH, double_tap_left: self.DASH, right_down: self.WALK, left_down: self.WALK, left_up: self.WALK, right_up: self.WALK,
                              down_down: self.DOWN, up_down: self.IDLE_JUMP, time_out: self.WALK},
                 self.DOWN: {right_down: self.WALK, left_down: self.WALK,
                             right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
-                self.WALK: {right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
+                self.WALK: {double_tap_right: self.IDLE, double_tap_left: self.IDLE, right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
                             time_out: self.DASH, up_down: self.IDLE_JUMP},
                 self.DASH: {right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
                             a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP},
@@ -129,6 +141,30 @@ class Kirby: #부모 클래스 커비
     def update(self):
         self.state_machine.update()
     def handle_event(self, event):
+        # 더블탭 감지: 빠르게 같은 방향으로 두 번 누르면 ('DOUBLE_TAP', 'RIGHT'|'LEFT') 이벤트 발생
+        if event.type == SDL_KEYDOWN:
+            if event.key == SDLK_RIGHT:
+                now = get_time()
+                if now - self._last_tap['RIGHT'] <= DOUBLE_TAP_TIME:
+                    self.face_dir = 1
+                    self.dir = 1
+                    self._last_tap['RIGHT'] = 0.0
+                    self.state_machine.handle_state_event(('DOUBLE_TAP', 'RIGHT'))
+                    return
+                else:
+                    self._last_tap['RIGHT'] = now
+            elif event.key == SDLK_LEFT:
+                now = get_time()
+                if now - self._last_tap['LEFT'] <= DOUBLE_TAP_TIME:
+                    self.face_dir = -1
+                    self.dir = -1
+                    self._last_tap['LEFT'] = 0.0
+                    self.state_machine.handle_state_event(('DOUBLE_TAP', 'LEFT'))
+                    return
+                else:
+                    self._last_tap['LEFT'] = now
+
+        # 기본 입력은 기존대로 전달
         self.state_machine.handle_state_event(('INPUT', event))
     def draw(self):
         self.state_machine.draw()
@@ -191,7 +227,6 @@ class Walk: #커비 걷기 상태
         if Walk.image == None:
             Walk.image = load_image('Resource/Character/KirbyWalk.png')
     def enter(self, e):
-        self.kirby.wait_time = get_time()
         if right_down(e) or left_up(e):
             self.kirby.dir = self.kirby.face_dir = 1
         elif left_down(e) or right_up(e):
@@ -203,8 +238,6 @@ class Walk: #커비 걷기 상태
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 12
         self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
-        if get_time() - self.kirby.wait_time > 24 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
-            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1: # right
             Walk.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
