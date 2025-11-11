@@ -119,7 +119,7 @@ class Kirby: #부모 클래스 커비
                             right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
                 self.WALK: {right_double_tap: self.IDLE, left_double_tap: self.IDLE,
                             right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
-                            time_out: self.DASH, up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK},
+                            up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK},
                 self.DASH: {right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
                             a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP},
                 self.IDLE_DASH_ATTACK: {time_out: self.DASH_ATTACK, after_delay_time_out: self.WALK,
@@ -143,7 +143,9 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE},
-                self.IDLE_SLASH_ATTACK: {},
+                self.IDLE_SLASH_ATTACK: {#time_out: self.SLASH_ATTACK,
+                                        left_down: self.IDLE, left_up: self.IDLE,
+                                        right_down: self.IDLE, right_up: self.IDLE},
             }
         )
 
@@ -698,7 +700,17 @@ class IdleSlashAttack: #커비 베기 공격 대기 상태
     def enter(self, e):
         self.kirby.wait_time = get_time()
     def exit(self, e):
-        pass
+        if self.kirby.dir != 0:
+            self.kirby.flag = 'IDLE'
+            if right_down(e):
+                self.kirby.face_dir = 1
+            elif left_down(e):
+                self.kirby.face_dir = -1
+        else:
+            if right_down(e):
+                self.kirby.flag = 'RIGHT'
+            elif left_down(e):
+                self.kirby.flag = 'LEFT'
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 5
         if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
