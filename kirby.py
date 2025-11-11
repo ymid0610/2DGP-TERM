@@ -69,7 +69,7 @@ def left_double_tap(e):
 class Kirby: #부모 클래스 커비
     def __init__(self):
         # 초기값
-        self.x, self.y = 400, 90
+        self.x, self.y = 400, 200
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
@@ -556,12 +556,12 @@ class SpinAttack: #커비 공중베기 공격 상태
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
-            SpinAttack.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+            SpinAttack.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 48 * SCALE, 48 * SCALE)
         else:
-            SpinAttack.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
+            SpinAttack.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y - (7 * SCALE), 48 * SCALE, 48 * SCALE)
         draw_rectangle(*self.get_bb())
     def get_bb(self):
-        return self.kirby.x - (48 * SCALE / 2), self.kirby.y - (48 * SCALE / 2), self.kirby.x + (48 * SCALE / 2), self.kirby.y + (48 * SCALE / 2)
+        return self.kirby.x - (48 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE), self.kirby.x + (48 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE)
 
 class IdleSuperJump:  # 커비 슈퍼 점프 대기 상태
     def __init__(self, kirby):
@@ -698,10 +698,12 @@ class IdleSlashAttack: #커비 베기 공격 대기 상태
     image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        self.animation = True
         if IdleSlashAttack.image == None:
             IdleSlashAttack.image = load_image('Resource/Character/KirbyIdleSlashAttack.png')
     def enter(self, e):
-        self.kirby.wait_time = get_time()
+        self.kirby.frame = 0
+        self.animation = True
     def exit(self, e):
         if self.kirby.dir != 0:
             self.kirby.flag = 'IDLE'
@@ -712,12 +714,19 @@ class IdleSlashAttack: #커비 베기 공격 대기 상태
         else:
             if right_down(e):
                 self.kirby.flag = 'RIGHT'
+                self.kirby.face_dir = 1
             elif left_down(e):
                 self.kirby.flag = 'LEFT'
+                self.kirby.face_dir = -1
     def do(self):
-        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 5
-        if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
-            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        if not self.animation:
+            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+                self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        else:
+            self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 5
+            if self.kirby.frame >= 4:
+                self.kirby.wait_time = get_time()
+                self.animation = False
     def draw(self):
         if self.kirby.face_dir == 1:
             IdleSlashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
@@ -766,7 +775,7 @@ class SlashAttack: #커비 베기 공격 상태
         if self.kirby.face_dir == 1:
             SlashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
         else:
-            SlashAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y, 96 * SCALE, 48 * SCALE)
+            SlashAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
         draw_rectangle(*self.get_bb())
     def get_bb(self):
         return self.kirby.x - (96 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE), self.kirby.x + (96 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE)
