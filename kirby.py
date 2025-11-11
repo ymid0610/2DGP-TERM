@@ -63,21 +63,21 @@ def a_up(e):
 # 더블탭 이벤트 판정용 함수
 def right_double_tap(e):
     return e[0] == 'DOUBLE_TAP' and e[1] == 'RIGHT'
-
 def left_double_tap(e):
     return e[0] == 'DOUBLE_TAP' and e[1] == 'LEFT'
 
 class Kirby: #부모 클래스 커비
     def __init__(self):
+        # 초기값
         self.x, self.y = 400, 90
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
         self.flag = None
         self.vy= 0.0
-        # 더블탭 기록 초기화
         self._last_tap = {'RIGHT': 0.0, 'LEFT': 0.0}
 
+        # 상태 객체들
         self.IDLE = Idle(self)
         self.DOWN = Down(self)
         self.WALK = Walk(self)
@@ -108,6 +108,8 @@ class Kirby: #부모 클래스 커비
         self.GUARD = Guard(self)
         self.WIN = Win(self)
         self.STAR = Star(self)
+
+        # 상태 다이어그램
         self.state_machine = StateMachine(
             self.IDLE,
             {
@@ -143,9 +145,10 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE},
-                self.IDLE_SLASH_ATTACK: {#time_out: self.SLASH_ATTACK,
+                self.IDLE_SLASH_ATTACK: {time_out: self.SLASH_ATTACK,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
+                self.SLASH_ATTACK: {},
             }
         )
 
@@ -722,16 +725,51 @@ class IdleSlashAttack: #커비 베기 공격 대기 상태
             IdleSlashAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y, 96 * SCALE, 48 * SCALE)
 
 class SlashAttack: #커비 베기 공격 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if SlashAttack.image == None:
+            SlashAttack.image = load_image('Resource/Character/KirbySlashAttack.png')
     def enter(self, e):
-        pass
+        if right_up(e) or left_up(e):
+            if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
+                self.kirby.flag = 'LEFT'
+            elif self.kirby.flag == 'RIGHT' and left_up(e):  # 오른쪽 키다운
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.flag == 'IDLE':  # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+            else:  # 키다운 없음
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+        elif right_down(e) or right_double_tap(e):
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                    self.kirby.flag = 'IDLE'  # 정지 상태 변경
+            else:  # 키다운 없음
+                    self.kirby.flag = 'RIGHT'
+        elif left_down(e) or left_double_tap(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+            else:  # 키다운 없음
+                self.kirby.flag = 'LEFT'
+        else:  # 최초 진입
+            self.kirby.wait_time = get_time()
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
+        if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            pass
+            # self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            SlashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
+        else:
+            SlashAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y, 96 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return self.kirby.x - (96 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE), self.kirby.x + (96 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE)
 
 class RapidAttack: #커비 연속 공격 상태
     def __init__(self, kirby):
