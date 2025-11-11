@@ -113,12 +113,13 @@ class Kirby: #부모 클래스 커비
             {
                 self.IDLE : {right_double_tap: self.DASH, left_double_tap: self.DASH,
                              right_down: self.WALK, left_down: self.WALK, left_up: self.WALK, right_up: self.WALK,
-                             down_down: self.DOWN, up_down: self.IDLE_JUMP, time_out: self.WALK},
+                             down_down: self.DOWN, up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK,
+                             time_out: self.WALK},
                 self.DOWN: {right_down: self.WALK, left_down: self.WALK,
                             right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
                 self.WALK: {right_double_tap: self.IDLE, left_double_tap: self.IDLE,
                             right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
-                            time_out: self.DASH, up_down: self.IDLE_JUMP},
+                            time_out: self.DASH, up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK},
                 self.DASH: {right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
                             a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP},
                 self.IDLE_DASH_ATTACK: {time_out: self.DASH_ATTACK, after_delay_time_out: self.WALK,
@@ -142,6 +143,7 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE},
+                self.IDLE_SLASH_ATTACK: {},
             }
         )
 
