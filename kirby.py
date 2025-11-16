@@ -149,8 +149,12 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_SLASH_ATTACK: {time_out: self.SLASH_ATTACK,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
-                self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK},
-                self.IDLE_ATTACK: {after_delay_time_out: self.IDLE},
+                self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK,
+                                    left_double_tap: self.SLASH_ATTACK, right_double_tap: self.SLASH_ATTACK,
+                                    left_down: self.SLASH_ATTACK, right_down: self.SLASH_ATTACK, left_up: self.SLASH_ATTACK, right_up: self.SLASH_ATTACK},
+                self.IDLE_ATTACK: {after_delay_time_out: self.IDLE,
+                                   left_down: self.IDLE, left_up: self.IDLE,
+                                   right_down: self.IDLE, right_up: self.IDLE},
             }
         )
 
@@ -196,12 +200,13 @@ class Idle: #커비 대기 상태
         if Idle.image == None:
             Idle.image = load_image('Resource/Character/KirbyIdle.png')
     def enter(self, e):
-        if time_out(e):
+        if time_out(e) or after_delay_time_out(e):
             pass
         else:
             self.kirby.dir = 0
     def exit(self, e):
-        pass
+        if a_down(e):
+            self.kirby.flag = 'IDLE'
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Idle.pattern)
         if self.kirby.flag == 'LEFT' or self.kirby.flag == 'RIGHT':
@@ -250,7 +255,12 @@ class Walk: #커비 걷기 상태
         else:
             self.kirby.dir = self.kirby.face_dir
     def exit(self, e):
-        pass
+        if a_down(e):
+            if self.kirby.face_dir == 1:
+                self.kirby.flag = 'RIGHT'
+            else:
+                self.kirby.flag = 'LEFT'
+        print(f'{self.kirby.dir}, {self.kirby.flag}')
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 12
         self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
@@ -693,14 +703,32 @@ class IdleAttack: #커비 공격 대기 상태
             IdleAttack.image = load_image('Resource/Character/KirbyIdleAttack.png')
     def enter(self, e):
         if after_delay_time_out(e): # 끝나는 모션
-            self.kirby.flag = 'AFTER_DELAY_TIMEOUT'
+            self.flag = 'AFTER_DELAY_TIMEOUT'
+            if self.kirby.flag == 'LEFT':
+                self.kirby.face_dir = -1
+            elif self.kirby.flag == 'RIGHT':
+                self.kirby.face_dir = 1
         self.kirby.frame = 0
         self.kirby.wait_time = get_time()
     def exit(self, e):
-        pass
+        if self.kirby.dir != 0:
+            if right_down(e) or right_up(e):
+                self.kirby.flag = 'IDLE'
+                self.kirby.face_dir = 1
+            elif left_down(e) or left_up(e):
+                self.kirby.flag = 'IDLE'
+                self.kirby.face_dir = -1
+        else:
+            if right_down(e) or left_up(e):
+                self.kirby.flag = 'RIGHT'
+                self.kirby.face_dir = 1
+            elif left_down(e) or right_up(e):
+                self.kirby.flag = 'LEFT'
+                self.kirby.face_dir = -1
+        print(f'{self.kirby.dir}, {self.kirby.flag}, IdleAttack')
     def do(self):
         if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
-            if self.kirby.flag == 'AFTER_DELAY_TIMEOUT':
+            if self.flag == 'AFTER_DELAY_TIMEOUT':
                 self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
             else:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
@@ -723,10 +751,15 @@ class IdleSlashAttack: #커비 베기 공격 대기 상태
     def exit(self, e):
         if self.kirby.dir != 0:
             self.kirby.flag = 'IDLE'
-            if right_down(e):
+            if right_down(e) or right_up(e):
                 self.kirby.face_dir = 1
-            elif left_down(e):
+            elif left_down(e) or left_up(e):
                 self.kirby.face_dir = -1
+            else:
+                if self.kirby.face_dir == 1:
+                    self.kirby.flag = 'RIGHT'
+                elif self.kirby.face_dir == -1:
+                    self.kirby.flag = 'LEFT'
         else:
             if right_down(e) or left_up(e):
                 self.kirby.flag = 'RIGHT'
@@ -734,6 +767,7 @@ class IdleSlashAttack: #커비 베기 공격 대기 상태
             elif left_down(e) or right_up(e):
                 self.kirby.flag = 'LEFT'
                 self.kirby.face_dir = -1
+        print(f'{self.kirby.dir}, {self.kirby.flag}, IdleSlashAttack')
     def do(self):
         if not self.animation:
             if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
@@ -781,11 +815,15 @@ class SlashAttack: #커비 베기 공격 상태
         else:  # 최초 진입
             self.kirby.wait_time = get_time()
     def exit(self, e):
-        pass
+        if after_delay_time_out(e):
+            if self.kirby.flag == 'IDLE':
+                self.kirby.dir = 0
+        print(f'{self.kirby.dir}, {self.kirby.flag}, SlashAttack')
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
         if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
             self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
+            print(f'{self.kirby.dir}, {self.kirby.flag}, SlashAttack AD')
     def draw(self):
         if self.kirby.face_dir == 1:
             SlashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
