@@ -149,7 +149,8 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_SLASH_ATTACK: {time_out: self.SLASH_ATTACK,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
-                self.SLASH_ATTACK: {},
+                self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK},
+                self.IDLE_ATTACK: {after_delay_time_out: self.IDLE},
             }
         )
 
@@ -698,16 +699,16 @@ class IdleAttack: #커비 공격 대기 상태
     def exit(self, e):
         pass
     def do(self):
-        if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+        if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
             if self.kirby.flag == 'AFTER_DELAY_TIMEOUT':
                 self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
             else:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
-            IdleAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
+            IdleAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
         else:
-            IdleAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
+            IdleAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class IdleSlashAttack: #커비 베기 공격 대기 상태
     image = None
