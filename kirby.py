@@ -718,13 +718,20 @@ class IdleAttack: #커비 공격 대기 상태
             elif left_down(e) or left_up(e):
                 self.kirby.flag = 'IDLE'
                 self.kirby.face_dir = -1
-        else:
-            if right_down(e) or left_up(e):
-                self.kirby.flag = 'RIGHT'
-                self.kirby.face_dir = 1
-            elif left_down(e) or right_up(e):
-                self.kirby.flag = 'LEFT'
-                self.kirby.face_dir = -1
+        else: # 정지상태 a 키 진입
+            if self.kirby.flag == 'IDLE':
+                if right_down(e) or left_up(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.face_dir = 1
+                elif left_down(e) or right_up(e):
+                    self.kirby.flag = 'LEFT'
+                    self.kirby.face_dir = -1
+            elif self.kirby.flag == 'RIGHT':
+                if left_down(e) or right_up(e):
+                    self.kirby.flag = 'IDLE'
+            elif self.kirby.flag == 'LEFT':
+                if right_down(e) or left_up(e):
+                    self.kirby.flag = 'IDLE'
         print(f'{self.kirby.dir}, {self.kirby.flag}, IdleAttack')
     def do(self):
         if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
