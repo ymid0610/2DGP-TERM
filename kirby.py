@@ -122,7 +122,8 @@ class Kirby: #부모 클래스 커비
                 self.WALK: {right_double_tap: self.IDLE, left_double_tap: self.IDLE,
                             right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
                             up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK},
-                self.DASH: {right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
+                self.DASH: {right_double_tap: self.IDLE, left_double_tap: self.IDLE,
+                            right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
                             a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP},
                 self.IDLE_DASH_ATTACK: {time_out: self.DASH_ATTACK, after_delay_time_out: self.WALK,
                                         left_down: self.IDLE, left_up: self.IDLE,
@@ -712,10 +713,10 @@ class IdleSlashAttack: #커비 베기 공격 대기 상태
             elif left_down(e):
                 self.kirby.face_dir = -1
         else:
-            if right_down(e):
+            if right_down(e) or left_up(e):
                 self.kirby.flag = 'RIGHT'
                 self.kirby.face_dir = 1
-            elif left_down(e):
+            elif left_down(e) or right_up(e):
                 self.kirby.flag = 'LEFT'
                 self.kirby.face_dir = -1
     def do(self):
