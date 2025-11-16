@@ -684,16 +684,30 @@ class IdleLand: #커비 점프 착지 상태 (가벼운 착지)
         pass
 
 class IdleAttack: #커비 공격 대기 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        self.flag = None
+        if IdleAttack.image == None:
+            IdleAttack.image = load_image('Resource/Character/KirbyIdleAttack.png')
     def enter(self, e):
-        pass
+        if after_delay_time_out(e): # 끝나는 모션
+            self.kirby.flag = 'AFTER_DELAY_TIMEOUT'
+        self.kirby.frame = 0
+        self.kirby.wait_time = get_time()
     def exit(self, e):
         pass
     def do(self):
-        pass
+        if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            if self.kirby.flag == 'AFTER_DELAY_TIMEOUT':
+                self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
+            else:
+                self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            IdleAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
+        else:
+            IdleAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
 
 class IdleSlashAttack: #커비 베기 공격 대기 상태
     image = None
@@ -770,8 +784,7 @@ class SlashAttack: #커비 베기 공격 상태
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
         if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
-            pass
-            # self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+            self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
             SlashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
