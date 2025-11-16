@@ -147,14 +147,16 @@ class Kirby: #부모 클래스 커비
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE},
                 self.IDLE_SLASH_ATTACK: {time_out: self.SLASH_ATTACK,
+                                         left_double_tap: self.IDLE, right_double_tap: self.IDLE,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
                 self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK,
                                     left_double_tap: self.SLASH_ATTACK, right_double_tap: self.SLASH_ATTACK,
                                     left_down: self.SLASH_ATTACK, right_down: self.SLASH_ATTACK, left_up: self.SLASH_ATTACK, right_up: self.SLASH_ATTACK},
                 self.IDLE_ATTACK: {after_delay_time_out: self.IDLE,
-                                   left_down: self.IDLE, left_up: self.IDLE,
-                                   right_down: self.IDLE, right_up: self.IDLE},
+                                   left_double_tap: self.DASH, right_double_tap: self.DASH,
+                                   left_down: self.IDLE, right_down: self.IDLE,
+                                   left_up: self.IDLE, right_up: self.IDLE},
             }
         )
 
