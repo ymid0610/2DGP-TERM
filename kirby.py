@@ -165,7 +165,11 @@ class Kirby: #부모 클래스 커비
                                         left_double_tap: self.IDLE, right_double_tap: self.IDLE,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
-                self.RISE_JUMP_ATTACK: {},
+                self.RISE_JUMP_ATTACK: {left_double_tap: self.RISE_JUMP_ATTACK, right_double_tap: self.RISE_JUMP_ATTACK,
+                                        left_down: self.RISE_JUMP_ATTACK, right_down: self.RISE_JUMP_ATTACK,
+                                        left_up: self.RISE_JUMP_ATTACK, right_up: self.RISE_JUMP_ATTACK,
+                                        time_out: self.JUMP_ATTACK},
+                self.JUMP_ATTACK: {},
             }
         )
 
@@ -462,7 +466,6 @@ class IdleRise: #커비 점프 상승 상태
             self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
         if self.kirby.vy <= 0:
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
-
     def draw(self):
         if self.kirby.face_dir == 1:
             IdleRise.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
@@ -940,16 +943,62 @@ class IdleJumpAttack: #커비 점프 베기 공격 대기 상태
             IdleJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class RiseJumpAttack: #커비 점프 상승 베기 공격 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if RiseJumpAttack.image == None:
+            RiseJumpAttack.image = load_image('Resource/Character/KirbyRiseJumpAttack.png')
     def enter(self, e):
-        pass
+        if right_up(e) or left_up(e):
+            if self.kirby.flag == 'LEFT' and right_up(e): # 왼쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = -1  # 왼쪽 이동 상태 + 왼쪽 이동
+            elif self.kirby.flag == 'RIGHT' and left_up(e): # 오른쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = 1 # 오른쪽 이동 상태 + 오른쪽 이동
+            elif self.kirby.flag == 'IDLE': # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                    self.kirby.dir = self.kirby.face_dir = -1
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+            else: # 키다운 없음
+                self.kirby.flag = 'IDLE' # 정지 상태 변경
+                self.kirby.dir = 0
+        elif right_down(e) or right_double_tap(e):
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'RIGHT'
+                self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e) or left_double_tap(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'LEFT'
+                self.kirby.dir = self.kirby.face_dir = -1
+        else: # 최초 진입
+            self.kirby.frame = 0
+            self.kirby.vy = 1.2 * JUMP_SPEED_PPS
+            if self.kirby.dir >= 1: # 오른쪽 걷기+대쉬 상태
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.dir <= -1: # 왼쪽 걷기+대쉬 상태
+                self.kirby.flag = 'LEFT'
+            else: # 정지 상태
+                self.kirby.flag = 'IDLE'
     def exit(self, e):
-        pass
+        print(f'{self.kirby.dir}, {self.kirby.flag}, RiseJumpAttack')
     def do(self):
-        pass
+        self.kirby.y += self.kirby.vy * game_framework.frame_time
+        self.kirby.vy -= GRAVITY_PPS * game_framework.frame_time
+        if self.kirby.vy <= 0:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            RiseJumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
+        else:
+            RiseJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class JumpAttack: #커비 점프 공격 상태
     def __init__(self, kirby):
