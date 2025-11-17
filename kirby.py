@@ -133,7 +133,7 @@ class Kirby: #부모 클래스 커비
                                    right_down: self.IDLE, right_up: self.IDLE},
                 self.IDLE_JUMP: {left_double_tap: self.IDLE_JUMP, right_double_tap: self.IDLE_JUMP,
                                  left_down: self.IDLE_JUMP, right_down: self.IDLE_JUMP, left_up: self.IDLE_JUMP, right_up: self.IDLE_JUMP,
-                                 time_out: self.IDLE_RISE},
+                                 time_out: self.IDLE_RISE, up_up: self.IDLE_RISE, a_down: self.IDLE_JUMP_ATTACK},
                 self.IDLE_RISE: {left_double_tap: self.IDLE_RISE, right_double_tap: self.IDLE_RISE,
                                  left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
                                  time_out: self.JUMP, a_down: self.SPIN_ATTACK},
@@ -153,7 +153,7 @@ class Kirby: #부모 클래스 커비
                 self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK, a_down: self.RAPID_ATTACK,
                                     left_double_tap: self.SLASH_ATTACK, right_double_tap: self.SLASH_ATTACK,
                                     left_down: self.SLASH_ATTACK, right_down: self.SLASH_ATTACK, left_up: self.SLASH_ATTACK, right_up: self.SLASH_ATTACK},
-                self.IDLE_ATTACK: {after_delay_time_out: self.IDLE, a_down: self.RAPID_ATTACK,
+                self.IDLE_ATTACK: {time_out: self.IDLE, after_delay_time_out: self.IDLE, a_down: self.RAPID_ATTACK,
                                    left_double_tap: self.DASH, right_double_tap: self.DASH,
                                    left_down: self.IDLE, right_down: self.IDLE,
                                    left_up: self.IDLE, right_up: self.IDLE},
@@ -161,6 +161,11 @@ class Kirby: #부모 클래스 커비
                                     left_double_tap: self.RAPID_ATTACK, right_double_tap: self.RAPID_ATTACK,
                                     left_down: self.RAPID_ATTACK, right_down: self.RAPID_ATTACK,
                                     left_up: self.RAPID_ATTACK, right_up: self.RAPID_ATTACK},
+                self.IDLE_JUMP_ATTACK: {time_out: self.RISE_JUMP_ATTACK,
+                                        left_double_tap: self.IDLE, right_double_tap: self.IDLE,
+                                        left_down: self.IDLE, left_up: self.IDLE,
+                                        right_down: self.IDLE, right_up: self.IDLE},
+                self.RISE_JUMP_ATTACK: {},
             }
         )
 
@@ -890,16 +895,49 @@ class RapidAttack: #커비 연속 공격 상태
             RapidAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class IdleJumpAttack: #커비 점프 베기 공격 대기 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if IdleJumpAttack.image == None:
+            IdleJumpAttack.image = load_image('Resource/Character/KirbyIdleJumpAttack.png')
+        self.animation = True
     def enter(self, e):
-        pass
+        self.kirby.frame = 0
+        self.animation = True
     def exit(self, e):
-        pass
+        if self.kirby.dir != 0:
+            self.kirby.flag = 'IDLE'
+            if right_down(e) or right_up(e):
+                self.kirby.face_dir = 1
+            elif left_down(e) or left_up(e):
+                self.kirby.face_dir = -1
+            else:
+                if self.kirby.face_dir == 1:
+                    self.kirby.flag = 'RIGHT'
+                elif self.kirby.face_dir == -1:
+                    self.kirby.flag = 'LEFT'
+        else:
+            if right_down(e) or left_up(e):
+                self.kirby.flag = 'RIGHT'
+                self.kirby.face_dir = 1
+            elif left_down(e) or right_up(e):
+                self.kirby.flag = 'LEFT'
+                self.kirby.face_dir = -1
+        print(f'{self.kirby.dir}, {self.kirby.flag}, IdleJumpAttack')
     def do(self):
-        pass
+        if not self.animation:
+            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+                self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        else:
+            self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
+            if self.kirby.frame >= 3:
+                self.kirby.wait_time = get_time()
+                self.animation = False
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            IdleJumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
+        else:
+            IdleJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class RiseJumpAttack: #커비 점프 상승 베기 공격 상태
     def __init__(self, kirby):
