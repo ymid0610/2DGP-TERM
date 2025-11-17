@@ -150,14 +150,17 @@ class Kirby: #부모 클래스 커비
                                          left_double_tap: self.IDLE, right_double_tap: self.IDLE,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
-                self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK,
+                self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK, a_down: self.RAPID_ATTACK,
                                     left_double_tap: self.SLASH_ATTACK, right_double_tap: self.SLASH_ATTACK,
                                     left_down: self.SLASH_ATTACK, right_down: self.SLASH_ATTACK, left_up: self.SLASH_ATTACK, right_up: self.SLASH_ATTACK},
                 self.IDLE_ATTACK: {after_delay_time_out: self.IDLE, a_down: self.RAPID_ATTACK,
                                    left_double_tap: self.DASH, right_double_tap: self.DASH,
                                    left_down: self.IDLE, right_down: self.IDLE,
                                    left_up: self.IDLE, right_up: self.IDLE},
-                self.RAPID_ATTACK: {a_up: self.IDLE_ATTACK},
+                self.RAPID_ATTACK: {after_delay_time_out: self.IDLE_ATTACK, a_up: self.IDLE_ATTACK,
+                                    left_double_tap: self.RAPID_ATTACK, right_double_tap: self.RAPID_ATTACK,
+                                    left_down: self.RAPID_ATTACK, right_down: self.RAPID_ATTACK,
+                                    left_up: self.RAPID_ATTACK, right_up: self.RAPID_ATTACK},
             }
         )
 
@@ -850,11 +853,36 @@ class RapidAttack: #커비 연속 공격 상태
         if RapidAttack.image == None:
             RapidAttack.image = load_image('Resource/Character/KirbyRapidAttack.png')
     def enter(self, e):
-        self.kirby.wait_time = get_time()
+        if right_up(e) or left_up(e):
+            if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
+                self.kirby.flag = 'LEFT'
+            elif self.kirby.flag == 'RIGHT' and left_up(e):  # 오른쪽 키다운
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.flag == 'IDLE':  # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+            else:  # 키다운 없음
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+        elif right_down(e) or right_double_tap(e):
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+            else:  # 키다운 없음
+                self.kirby.flag = 'RIGHT'
+        elif left_down(e) or left_double_tap(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+            else:  # 키다운 없음
+                self.kirby.flag = 'LEFT'
+        else:  # 최초 진입
+            self.kirby.wait_time = get_time()
     def exit(self, e):
         print(f'{self.kirby.dir}, {self.kirby.flag}, RapidAttack')
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 9
+        if get_time() - self.kirby.wait_time > 9 * 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
             RapidAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
