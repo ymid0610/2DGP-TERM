@@ -153,10 +153,11 @@ class Kirby: #부모 클래스 커비
                 self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK,
                                     left_double_tap: self.SLASH_ATTACK, right_double_tap: self.SLASH_ATTACK,
                                     left_down: self.SLASH_ATTACK, right_down: self.SLASH_ATTACK, left_up: self.SLASH_ATTACK, right_up: self.SLASH_ATTACK},
-                self.IDLE_ATTACK: {after_delay_time_out: self.IDLE,
+                self.IDLE_ATTACK: {after_delay_time_out: self.IDLE, a_down: self.RAPID_ATTACK,
                                    left_double_tap: self.DASH, right_double_tap: self.DASH,
                                    left_down: self.IDLE, right_down: self.IDLE,
                                    left_up: self.IDLE, right_up: self.IDLE},
+                self.RAPID_ATTACK: {a_up: self.IDLE_ATTACK},
             }
         )
 
@@ -843,16 +844,22 @@ class SlashAttack: #커비 베기 공격 상태
         return self.kirby.x - (96 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE), self.kirby.x + (96 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE)
 
 class RapidAttack: #커비 연속 공격 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        if RapidAttack.image == None:
+            RapidAttack.image = load_image('Resource/Character/KirbyRapidAttack.png')
     def enter(self, e):
-        pass
+        self.kirby.wait_time = get_time()
     def exit(self, e):
-        pass
+        print(f'{self.kirby.dir}, {self.kirby.flag}, RapidAttack')
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 9
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            RapidAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
+        else:
+            RapidAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class IdleJumpAttack: #커비 점프 베기 공격 대기 상태
     def __init__(self, kirby):
