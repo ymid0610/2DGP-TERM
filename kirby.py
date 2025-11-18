@@ -903,8 +903,8 @@ class RapidAttack: #커비 연속 공격 상태
     def exit(self, e):
         print(f'{self.kirby.dir}, {self.kirby.flag}, RapidAttack')
     def do(self):
-        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 9
-        if get_time() - self.kirby.wait_time > 9 * 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+        self.kirby.frame = (self.kirby.frame + 3 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 9
+        if get_time() - self.kirby.wait_time > 2 * 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
             self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
