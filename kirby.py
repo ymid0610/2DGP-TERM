@@ -169,7 +169,11 @@ class Kirby: #부모 클래스 커비
                                         left_down: self.RISE_JUMP_ATTACK, right_down: self.RISE_JUMP_ATTACK,
                                         left_up: self.RISE_JUMP_ATTACK, right_up: self.RISE_JUMP_ATTACK,
                                         time_out: self.JUMP_ATTACK},
-                self.JUMP_ATTACK: {},
+                self.JUMP_ATTACK: {left_double_tap: self.JUMP_ATTACK, right_double_tap: self.JUMP_ATTACK,
+                                   left_down: self.JUMP_ATTACK, right_down: self.JUMP_ATTACK,
+                                   left_up: self.JUMP_ATTACK, right_up: self.JUMP_ATTACK,
+                                   time_out: self.FALL_JUMP_ATTACK},
+                self.FALL_JUMP_ATTACK: {}
             }
         )
 
