@@ -173,7 +173,8 @@ class Kirby: #부모 클래스 커비
                                    left_down: self.JUMP_ATTACK, right_down: self.JUMP_ATTACK,
                                    left_up: self.JUMP_ATTACK, right_up: self.JUMP_ATTACK,
                                    time_out: self.FALL_JUMP_ATTACK},
-                self.FALL_JUMP_ATTACK: {}
+                self.FALL_JUMP_ATTACK: {time_out: self.END_JUMP_ATTACK},
+                self.END_JUMP_ATTACK: {}
             }
         )
 
@@ -1129,16 +1130,49 @@ class FallJumpAttack: #커비 점프 낙하 베기 공격 상태
             FallJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (2 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class EndJumpAttack: #커비 점프 베기 공격 착지 상태
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        self.animation = True
+        if EndJumpAttack.image == None:
+            EndJumpAttack.image = load_image('Resource/Character/KirbyEndJumpAttack.png')
     def enter(self, e):
-        pass
+        self.kirby.frame = 0
+        self.animation = True
     def exit(self, e):
-        pass
+        if self.kirby.dir != 0: # 이동상태에서 진입
+            self.kirby.flag = 'IDLE'
+            if right_down(e) or right_up(e):
+                self.kirby.face_dir = 1
+            elif left_down(e) or left_up(e):
+                self.kirby.face_dir = -1
+            else:
+                if self.kirby.face_dir == 1:
+                    self.kirby.flag = 'RIGHT'
+                elif self.kirby.face_dir == -1:
+                    self.kirby.flag = 'LEFT'
+        else: # 정지상태에서 진입
+            if right_down(e) or left_up(e):
+                self.kirby.flag = 'RIGHT'
+                self.kirby.face_dir = 1
+            elif left_down(e) or right_up(e):
+                self.kirby.flag = 'LEFT'
+                self.kirby.face_dir = -1
+        print(f'{self.kirby.dir}, {self.kirby.flag}, IdleJumpAttack')
     def do(self):
-        pass
+        if not self.animation:
+            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+                self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        else:
+            self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
+            if self.kirby.frame >= 1:
+                self.kirby.wait_time = get_time()
+                self.animation = False
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            EndJumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
+        else:
+            EndJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class Hit: #커비 피격 상태
     def __init__(self, kirby):
