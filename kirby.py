@@ -823,6 +823,7 @@ class SlashAttack: #커비 베기 공격 상태
     image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        self.animation = True
         if SlashAttack.image == None:
             SlashAttack.image = load_image('Resource/Character/KirbySlashAttack.png')
     def enter(self, e):
@@ -849,17 +850,23 @@ class SlashAttack: #커비 베기 공격 상태
             else:  # 키다운 없음
                 self.kirby.flag = 'LEFT'
         else:  # 최초 진입
-            self.kirby.wait_time = get_time()
+            self.kirby.frame = 0
+            self.animation = True
     def exit(self, e):
         if after_delay_time_out(e):
             if self.kirby.flag == 'IDLE':
                 self.kirby.dir = 0
         print(f'{self.kirby.dir}, {self.kirby.flag}, SlashAttack')
     def do(self):
-        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        if get_time() - self.kirby.wait_time > 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
-            self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
-            print(f'{self.kirby.dir}, {self.kirby.flag}, SlashAttack AD')
+        if not self.animation:
+            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+                self.kirby.state_machine.handle_state_event(('AFTER_DELAY_TIMEOUT', None))
+                print(f'{self.kirby.dir}, {self.kirby.flag}, SlashAttack AD')
+        else:
+            self.kirby.frame = (self.kirby.frame + 3 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
+            if self.kirby.frame >= 7:
+                self.kirby.wait_time = get_time()
+                self.animation = False
     def draw(self):
         if self.kirby.face_dir == 1:
             SlashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
