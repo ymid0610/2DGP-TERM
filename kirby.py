@@ -220,7 +220,10 @@ class Idle: #커비 대기 상태
             Idle.image = load_image('Resource/Character/KirbyIdle.png')
     def enter(self, e):
         if time_out(e) or after_delay_time_out(e):
-            pass
+            if self.kirby.flag == 'LEFT':
+                self.kirby.face_dir = -1
+            elif self.kirby.flag == 'RIGHT':
+                self.kirby.face_dir = 1
         else:
             self.kirby.dir = 0
     def exit(self, e):
