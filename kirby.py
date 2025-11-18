@@ -133,7 +133,7 @@ class Kirby: #부모 클래스 커비
                                    right_down: self.IDLE, right_up: self.IDLE},
                 self.IDLE_JUMP: {left_double_tap: self.IDLE_JUMP, right_double_tap: self.IDLE_JUMP,
                                  left_down: self.IDLE_JUMP, right_down: self.IDLE_JUMP, left_up: self.IDLE_JUMP, right_up: self.IDLE_JUMP,
-                                 time_out: self.IDLE_RISE, up_up: self.IDLE_RISE, a_down: self.IDLE_JUMP_ATTACK},
+                                 time_out: self.IDLE_SUPER_JUMP, up_up: self.IDLE_RISE, a_down: self.IDLE_JUMP_ATTACK},
                 self.IDLE_RISE: {left_double_tap: self.IDLE_RISE, right_double_tap: self.IDLE_RISE,
                                  left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
                                  time_out: self.JUMP, a_down: self.SPIN_ATTACK},
@@ -143,6 +143,7 @@ class Kirby: #부모 클래스 커비
                 self.SPIN_ATTACK: {left_double_tap: self.SPIN_ATTACK, right_double_tap: self.SPIN_ATTACK,
                                    left_down: self.SPIN_ATTACK, right_down: self.SPIN_ATTACK, left_up: self.SPIN_ATTACK, right_up: self.SPIN_ATTACK,
                                    time_out: self.IDLE_FALL},
+                self.IDLE_SUPER_JUMP: {},
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE},
@@ -419,7 +420,7 @@ class IdleJump: #커비 점프 대기 상태
         pass
     def do(self):
         if not self.animation:
-            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            if get_time() - self.kirby.wait_time > 2 * 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
         else:
             self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
