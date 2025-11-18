@@ -371,9 +371,9 @@ class DashAttack: #커비 대쉬 공격 상태
 
 class IdleJump: #커비 점프 대기 상태
     image = None
-    pattern = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1]
     def __init__(self, kirby):
         self.kirby = kirby
+        self.animation = True
         if IdleJump.image == None:
             IdleJump.image = load_image('Resource/Character/KirbyIdleJump.png')
     def enter(self, e):
@@ -407,24 +407,30 @@ class IdleJump: #커비 점프 대기 상태
                 self.kirby.flag = 'LEFT'
                 self.kirby.dir = self.kirby.face_dir = -1
         else:  # 최초 진입
-            self.kirby.wait_time = get_time()
             if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
                 self.kirby.flag = 'RIGHT'
             elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
                 self.kirby.flag = 'LEFT'
             else:  # 정지 상태
                 self.kirby.flag = 'IDLE'
+            self.kirby.frame = 0
+            self.animation = True
     def exit(self, e):
         pass
     def do(self):
-        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Down.pattern)
-        if get_time() - self.kirby.wait_time > 24 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
-            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        if not self.animation:
+            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+                self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        else:
+            self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
+            if self.kirby.frame >= 1:
+                self.kirby.wait_time = get_time()
+                self.animation = False
     def draw(self):
         if self.kirby.face_dir == 1:
-            IdleJump.image.clip_draw(IdleJump.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+            IdleJump.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
         else:
-            IdleJump.image.clip_composite_draw(IdleJump.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
+            IdleJump.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class IdleRise: #커비 점프 상승 상태
     image = None
@@ -1171,7 +1177,7 @@ class EndJumpAttack: #커비 점프 베기 공격 착지 상태
             elif left_down(e) or right_up(e):
                 self.kirby.flag = 'LEFT'
                 self.kirby.face_dir = -1
-        print(f'{self.kirby.dir}, {self.kirby.flag}, IdleJumpAttack')
+        print(f'{self.kirby.dir}, {self.kirby.flag}, EndJumpAttack')
     def do(self):
         if not self.animation:
             if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
