@@ -424,16 +424,18 @@ class IdleJump: #커비 점프 대기 상태
             else:  # 정지 상태
                 self.kirby.flag = 'IDLE'
             self.kirby.frame = 0
+            self.kirby.frame_time = get_time()
             self.animation = True
     def exit(self, e):
         pass
     def do(self):
+        self.kirby.frame = (self.kirby.frame + 12 * ACTION_PER_TIME * game_framework.frame_time) % 2
         if not self.animation:
-            if get_time() - self.kirby.wait_time > 2 * 12 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+            if get_time() - self.kirby.wait_time > self.kirby.frame_time:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
         else:
-            self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
             if self.kirby.frame >= 1:
+                self.kirby.frame_time = get_time() - self.kirby.frame_time
                 self.kirby.wait_time = get_time()
                 self.animation = False
     def draw(self):
@@ -625,8 +627,10 @@ class IdleSuperJump:  # 커비 슈퍼 점프 대기 상태
     def __init__(self, kirby):
         self.kirby = kirby
         self.animation = True
+        self.next_animation = False
+        self.repeat_count = 0
         if IdleSuperJump.image == None:
-            IdleSuperJump.image = load_image('Resource/Character/KirbyIdleSuperJump.png')
+            IdleSuperJump.image = load_image('Resource/Character/KirbyIdleRise.png')
     def enter(self, e):
         if right_up(e) or left_up(e):
             if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
@@ -660,6 +664,9 @@ class IdleSuperJump:  # 커비 슈퍼 점프 대기 상태
         else:  # 최초 진입
             self.kirby.frame = 0
             self.animation = True
+            self.next_animation = False
+            self.repeat_count = 0
+            self.kirby.vy = JUMP_SPEED_PPS
             if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
                 self.kirby.flag = 'RIGHT'
             elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
@@ -669,14 +676,30 @@ class IdleSuperJump:  # 커비 슈퍼 점프 대기 상태
     def exit(self, e):
         pass
     def do(self):
-        if not self.animation:
-            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time:
+        if not self.animation and not self.next_animation: # 모든 애니메이션 종료 후 대기 시간 체크
+            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time and self.kirby.vy <= 0:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
-        else:
-            self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 3
-            if self.kirby.frame >= 2:
-                self.kirby.wait_time = get_time()
-                self.animation = False
+        else: # 애니메이션 재생
+            if self.animation: # 첫번째 애니메이션 재생
+                self.kirby.frame = (self.kirby.frame + 2 * ACTION_PER_TIME * game_framework.frame_time) % 2
+                if self.kirby.frame >= 1:
+                    self.kirby.frame = 0
+                    self.repeat_count += 1
+                    if self.repeat_count >= FRAMES_PER_ACTION / 2:
+                        self.animation = False
+                        self.next_animation = True
+                        self.kirby.frame = 0
+                        IdleSuperJump.image = load_image('Resource/Character/KirbyIdleSuperJump.png')
+            elif self.next_animation: # 두번째 애니메이션 재생
+                self.kirby.frame = (self.kirby.frame + 3 * ACTION_PER_TIME * game_framework.frame_time) % 3
+                if self.kirby.frame >= 2:
+                    self.next_animation = False
+                    self.kirby.wait_time = get_time()
+
+        self.kirby.y += self.kirby.vy * game_framework.frame_time
+        self.kirby.vy -= GRAVITY_PPS * game_framework.frame_time
+        if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
+            self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
     def draw(self):
         if self.kirby.face_dir == 1:
             IdleSuperJump.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
