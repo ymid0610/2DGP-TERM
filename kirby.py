@@ -124,7 +124,8 @@ class Kirby: #부모 클래스 커비
                             up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK},
                 self.DASH: {right_double_tap: self.IDLE, left_double_tap: self.IDLE,
                             right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
-                            a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP},
+                            a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP,
+                            down_down: self.FALL},
                 self.IDLE_DASH_ATTACK: {time_out: self.DASH_ATTACK, after_delay_time_out: self.WALK,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
@@ -158,6 +159,10 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE},
+                self.FALL: {time_out: self.IDLE,
+                            left_double_tap: self.FALL, right_double_tap: self.FALL,
+                            left_down: self.FALL, right_down: self.FALL,
+                            left_up: self.FALL, right_up: self.FALL},
                 self.IDLE_SLASH_ATTACK: {time_out: self.SLASH_ATTACK,
                                          left_double_tap: self.IDLE, right_double_tap: self.IDLE,
                                         left_down: self.IDLE, left_up: self.IDLE,
@@ -920,16 +925,73 @@ class IdleFall: #커비 점프 낙하 상태
             IdleFall.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Fall: #커비 점프 착지 상태 (강한 착지)
+    image = None
     def __init__(self, kirby):
         self.kirby = kirby
+        self.kirby.frame = 0
+        self.animation = True
+        if Fall.image == None:
+            Fall.image = load_image('Resource/Character/KirbyFall.png')
     def enter(self, e):
-        pass
+        if right_up(e) or left_up(e):
+            if self.kirby.flag == 'LEFT' and right_up(e):  # 왼쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = -1  # 왼쪽 이동 상태 + 왼쪽 이동
+            elif self.kirby.flag == 'RIGHT' and left_up(e):  # 오른쪽 키다운
+                self.kirby.dir = self.kirby.face_dir = 1  # 오른쪽 이동 상태 + 오른쪽 이동
+            elif self.kirby.flag == 'IDLE':  # 둘다 키다운
+                if right_up(e):
+                    self.kirby.flag = 'LEFT'
+                    self.kirby.dir = self.kirby.face_dir = -1
+                elif left_up(e):
+                    self.kirby.flag = 'RIGHT'
+                    self.kirby.dir = self.kirby.face_dir = 1
+            else:  # 키다운 없음
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+        elif right_down(e) or right_double_tap(e):
+            if self.kirby.flag == 'LEFT':  # 왼쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'RIGHT'
+                self.kirby.dir = self.kirby.face_dir = 1
+        elif left_down(e) or left_double_tap(e):
+            if self.kirby.flag == 'RIGHT':  # 오른쪽 키다운
+                self.kirby.flag = 'IDLE'  # 정지 상태 변경
+                self.kirby.dir = 0
+            else:  # 키다운 없음
+                self.kirby.flag = 'LEFT'
+                self.kirby.dir = self.kirby.face_dir = -1
+        else:  # 최초 진입
+            if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
+                self.kirby.flag = 'RIGHT'
+            elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
+                self.kirby.flag = 'LEFT'
+            else:  # 정지 상태
+                self.kirby.flag = 'IDLE'
+            self.kirby.frame = 0
+            self.animation = True
+            self.kirby.dir *= 2
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + 1.5 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 12
+        self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        if not self.animation:
+            if get_time() - self.kirby.wait_time > self.kirby.frame_time:
+                self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        else:
+            if 9 <= self.kirby.frame < 10:
+                self.kirby.frame_time = get_time()
+            elif self.kirby.frame >= 11:
+                self.kirby.frame_time = get_time() - self.kirby.frame_time
+                self.kirby.wait_time = get_time()
+                self.animation = False
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            Fall.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 96, self.kirby.x, self.kirby.y - (3 * SCALE), 48 * SCALE, 96 * SCALE)
+        else:
+            Fall.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 96, 0, 'h', self.kirby.x,self.kirby.y - (3 * SCALE), 48 * SCALE, 96 * SCALE)
 
 class IdleLand: #커비 점프 착지 상태 (가벼운 착지)
     def __init__(self, kirby):
