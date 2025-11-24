@@ -674,28 +674,28 @@ class IdleSuperJump:  # 커비 슈퍼 점프 대기 상태
             else:  # 정지 상태
                 self.kirby.flag = 'IDLE'
     def exit(self, e):
-        pass
+        print(f'{self.kirby.dir}, {self.kirby.flag}, IdleSuperJump')
     def do(self):
         if not self.animation and not self.next_animation: # 모든 애니메이션 종료 후 대기 시간 체크
-            if get_time() - self.kirby.wait_time > FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time and self.kirby.vy <= 0:
+            if get_time() - self.kirby.wait_time > self.kirby.frame_time and self.kirby.vy <= 0:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
         else: # 애니메이션 재생
             if self.animation: # 첫번째 애니메이션 재생
-                self.kirby.frame = (self.kirby.frame + 2 * ACTION_PER_TIME * game_framework.frame_time) % 2
-                if self.kirby.frame >= 1:
+                self.kirby.frame = (self.kirby.frame + 12 * ACTION_PER_TIME * game_framework.frame_time) % 2
+                if self.kirby.vy <= JUMP_SPEED_PPS * 0.25:
+                    self.animation = False
+                    self.next_animation = True
                     self.kirby.frame = 0
-                    self.repeat_count += 1
-                    if self.repeat_count >= FRAMES_PER_ACTION / 2:
-                        self.animation = False
-                        self.next_animation = True
-                        self.kirby.frame = 0
-                        IdleSuperJump.image = load_image('Resource/Character/KirbyIdleSuperJump.png')
+                    self.kirby.wait_time = self.kirby.frame_time = get_time()
+                    IdleSuperJump.image = load_image('Resource/Character/KirbyIdleSuperJump.png')
             elif self.next_animation: # 두번째 애니메이션 재생
-                self.kirby.frame = (self.kirby.frame + 3 * ACTION_PER_TIME * game_framework.frame_time) % 3
+                self.kirby.frame = (self.kirby.frame + 12 * ACTION_PER_TIME * game_framework.frame_time) % 3
+                if self.kirby.frame == 1:
+                    self.kirby.frame_time = get_time()
                 if self.kirby.frame >= 2:
-                    self.next_animation = False
+                    self.kirby.frame_time = get_time() - self.kirby.frame_time
                     self.kirby.wait_time = get_time()
-
+                    self.next_animation = False
         self.kirby.y += self.kirby.vy * game_framework.frame_time
         self.kirby.vy -= GRAVITY_PPS * game_framework.frame_time
         if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
