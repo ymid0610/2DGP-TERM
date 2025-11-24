@@ -93,7 +93,6 @@ class Kirby: #부모 클래스 커비
         self.END_SUPER_JUMP = EndSuperJump(self)
         self.IDLE_FALL = IdleFall(self)
         self.FALL = Fall(self)
-        self.IDLE_LAND = IdleLand(self)
         self.IDLE_ATTACK = IdleAttack(self)
         self.IDLE_SLASH_ATTACK = IdleSlashAttack(self)
         self.SLASH_ATTACK = SlashAttack(self)
@@ -924,7 +923,7 @@ class IdleFall: #커비 점프 낙하 상태
         else:
             IdleFall.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
-class Fall: #커비 점프 착지 상태 (강한 착지)
+class Fall: #커비 점프 착지 및 구르기 상태
     image = None
     def __init__(self, kirby):
         self.kirby = kirby
@@ -992,18 +991,6 @@ class Fall: #커비 점프 착지 상태 (강한 착지)
             Fall.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 96, self.kirby.x, self.kirby.y - (3 * SCALE), 48 * SCALE, 96 * SCALE)
         else:
             Fall.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 96, 0, 'h', self.kirby.x,self.kirby.y - (3 * SCALE), 48 * SCALE, 96 * SCALE)
-
-class IdleLand: #커비 점프 착지 상태 (가벼운 착지)
-    def __init__(self, kirby):
-        self.kirby = kirby
-    def enter(self, e):
-        pass
-    def exit(self, e):
-        pass
-    def do(self):
-        pass
-    def draw(self):
-        pass
 
 class IdleAttack: #커비 공격 대기 상태
     image = None
