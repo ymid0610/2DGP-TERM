@@ -770,6 +770,8 @@ class SuperJump:  # 커비 슈퍼 점프 상태
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
         if get_time() - self.kirby.wait_time > 3 / ACTION_PER_TIME:
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
+            self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
     def draw(self):
         if self.kirby.face_dir == 1:
             SuperJump.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y + (3 * SCALE), 48 * SCALE, 48 * SCALE)
