@@ -143,11 +143,11 @@ class Kirby: #부모 클래스 커비
                 self.SPIN_ATTACK: {left_double_tap: self.SPIN_ATTACK, right_double_tap: self.SPIN_ATTACK,
                                    left_down: self.SPIN_ATTACK, right_down: self.SPIN_ATTACK, left_up: self.SPIN_ATTACK, right_up: self.SPIN_ATTACK,
                                    time_out: self.IDLE_FALL},
-                self.IDLE_SUPER_JUMP: {time_out: self.SUPER_JUMP,
+                self.IDLE_SUPER_JUMP: {time_out: self.SUPER_JUMP, a_down: self.SPIN_ATTACK,
                                        left_double_tap: self.IDLE_SUPER_JUMP, right_double_tap: self.IDLE_SUPER_JUMP,
                                        left_down: self.IDLE_SUPER_JUMP, right_down: self.IDLE_SUPER_JUMP,
                                        left_up: self.IDLE_SUPER_JUMP, right_up: self.IDLE_SUPER_JUMP},
-                self.SUPER_JUMP: {time_out: self.END_SUPER_JUMP,
+                self.SUPER_JUMP: {time_out: self.END_SUPER_JUMP, a_down: self.END_SUPER_JUMP,
                                   left_double_tap: self.SUPER_JUMP, right_double_tap: self.SUPER_JUMP,
                                   left_down: self.SUPER_JUMP, right_down: self.SUPER_JUMP,
                                   left_up: self.SUPER_JUMP, right_up: self.SUPER_JUMP},
@@ -825,7 +825,7 @@ class EndSuperJump:  # 커비 슈퍼 점프 종료 상태
             else:  # 정지 상태
                 self.kirby.flag = 'IDLE'
     def exit(self, e):
-        if not self.animation and not self.next_animation:
+        if not self.animation and not self.next_animation and self.kirby.vy >= JUMP_SPEED_PPS:
             EndSuperJump.image = load_image('Resource/Character/KirbyIdleSuperJump.png')
         print(f'{self.kirby.dir}, {self.kirby.flag}, EndSuperJump')
     def do(self):
@@ -839,13 +839,13 @@ class EndSuperJump:  # 커비 슈퍼 점프 종료 상태
                 if 1 <= self.kirby.frame < 2:
                     self.kirby.frame_time = get_time()
                 if self.kirby.frame <= 0:
+                    self.kirby.frame = 0
                     self.kirby.frame_time = get_time() - self.kirby.frame_time
                     self.kirby.wait_time = get_time()
                     self.animation = False
                     self.next_animation = True
             elif self.next_animation: # 두번째 애니메이션 재생
                 if get_time() - self.kirby.wait_time > self.kirby.frame_time:
-                    self.kirby.frame = 0
                     EndSuperJump.image = load_image('Resource/Character/KirbyIdleFall.png')
                     self.next_animation = False
         self.kirby.y -= self.kirby.vy * game_framework.frame_time
