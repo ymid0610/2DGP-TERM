@@ -140,7 +140,7 @@ class Kirby: #부모 클래스 커비
                                  time_out: self.IDLE_SUPER_JUMP, up_up: self.IDLE_RISE, a_down: self.IDLE_JUMP_ATTACK},
                 self.IDLE_RISE: {left_double_tap: self.IDLE_RISE, right_double_tap: self.IDLE_RISE,
                                  left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
-                                 time_out: self.JUMP, a_down: self.SPIN_ATTACK},
+                                 time_out: self.JUMP, a_down: self.SPIN_ATTACK, up_down: self.IDLE_SUPER_JUMP},
                 self.JUMP: {left_double_tap: self.JUMP, right_double_tap: self.JUMP,
                             left_down: self.JUMP, right_down: self.JUMP, left_up: self.JUMP, right_up: self.JUMP,
                             time_out: self.IDLE_FALL, a_down: self.SPIN_ATTACK},
@@ -161,7 +161,7 @@ class Kirby: #부모 클래스 커비
                                       left_up: self.END_SUPER_JUMP, right_up: self.END_SUPER_JUMP},
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
-                                 time_out: self.FALL},
+                                 time_out: self.IDLE, a_down: self.JUMP_ATTACK, up_down: self.IDLE_SUPER_JUMP},
                 self.FALL: {time_out: self.IDLE,
                             left_double_tap: self.FALL, right_double_tap: self.FALL,
                             left_down: self.FALL, right_down: self.FALL,
@@ -1400,7 +1400,8 @@ class JumpAttack: #커비 점프 공격 상태
     def exit(self, e):
         print(f'{self.kirby.dir}, {self.kirby.flag}, JumpAttack')
     def do(self):
-        self.kirby.stopped = False
+        if self.kirby.stopped:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
         if not self.animation:
             if get_time() - self.kirby.wait_time > self.kirby.frame_time:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
