@@ -210,7 +210,7 @@ class Kirby: #부모 클래스 커비
     def update(self):
         if not self.stopped:
             self.y += self.yv * game_framework.frame_time * PIXEL_PER_METER
-            self.yv -= GRAVITY_PPS * game_framework.frame_time
+            self.yv -= GRAVITY_PPS * game_framework.frame_time # 기본중력 적용
         else:
             if self.yv < 0:
                 self.yv = 0.0
@@ -517,25 +517,20 @@ class IdleRise: #커비 점프 상승 상태
                 self.kirby.flag = 'LEFT'
                 self.kirby.dir = self.kirby.face_dir = -1
         else: # 최초 진입
-            self.kirby.vy = JUMP_SPEED_PPS
+            self.kirby.frame = 0
+            self.kirby.yv = JUMP_SPEED_PPS
             if self.kirby.dir >= 1: # 오른쪽 걷기+대쉬 상태
                 self.kirby.flag = 'RIGHT'
             elif self.kirby.dir <= -1: # 왼쪽 걷기+대쉬 상태
                 self.kirby.flag = 'LEFT'
             else: # 정지 상태
                 self.kirby.flag = 'IDLE'
-            self.kirby.frame = 0
-            self.kirby.yv = JUMP_SPEED_PPS
-            self.kirby.stopped = False
     def exit(self, e):
         print(f'{self.kirby.stopped}, IdleRise')
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
         self.kirby.stopped = False
-        # 다음 프레임 예측 속도: 중력이 적용된 뒤의 속도
-        next_yv = self.kirby.yv - GRAVITY_PPS * game_framework.frame_time
-        # 정점(더 이상 상승하지 않는 순간) 도달 판정
-        if next_yv <= 0:
+        if self.kirby.yv - GRAVITY_PPS * game_framework.frame_time <= 0: # 다음 프레임에서 속도가 0 이하가 되면(최고점 도달)
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
         if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
             self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
