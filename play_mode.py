@@ -5,8 +5,10 @@ import game_framework
 import game_world
 
 from kirby import Kirby
+from grass import Grass
 
 kirby = None
+grass = None
 
 def handle_events():
     event_list = get_events()
@@ -19,12 +21,20 @@ def handle_events():
             kirby.handle_event(event)
 
 def init():
+    global grass
+    grass = Grass()
+    game_world.add_object(grass, 0)
+    game_world.add_collision_pair('grass:kirby', grass, None)
+
     global kirby
     kirby = Kirby()
     game_world.add_object(kirby, 1)
+    game_world.add_collision_pair('grass:kirby', None, kirby)
+    #game_world.add_collision_pair('kirby:AI_kirby', kirby, None)
 
 def update():
     game_world.update()
+    game_world.handle_collision()
 
 def draw():
     clear_canvas()
