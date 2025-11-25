@@ -117,7 +117,8 @@ class Kirby: #부모 클래스 커비
                              down_down: self.DOWN, up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK,
                              time_out: self.WALK},
                 self.DOWN: {right_down: self.WALK, left_down: self.WALK,
-                            right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE},
+                            right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE,
+                            a_down: self.GUARD},
                 self.WALK: {right_double_tap: self.IDLE, left_double_tap: self.IDLE,
                             right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
                             up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK},
@@ -162,7 +163,7 @@ class Kirby: #부모 클래스 커비
                             left_double_tap: self.FALL, right_double_tap: self.FALL,
                             left_down: self.FALL, right_down: self.FALL,
                             left_up: self.FALL, right_up: self.FALL},
-                self.IDLE_SLASH_ATTACK: {time_out: self.SLASH_ATTACK,
+                self.IDLE_SLASH_ATTACK: {time_out: self.SLASH_ATTACK, down_down: self.DOWN,
                                          left_double_tap: self.IDLE, right_double_tap: self.IDLE,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
@@ -197,6 +198,10 @@ class Kirby: #부모 클래스 커비
                                        left_double_tap: self.DASH, right_double_tap: self.DASH,
                                        left_down: self.IDLE, right_down: self.IDLE,
                                        left_up: self.IDLE, right_up: self.IDLE},
+                self.GUARD: {right_down: self.WALK, left_down: self.WALK,
+                             right_up: self.WALK, left_up: self.WALK,
+                             up_down: self.IDLE_JUMP, down_down: self.DOWN,
+                             time_out: self.IDLE, a_down: self.IDLE_SLASH_ATTACK},
             }
         )
 
@@ -1495,16 +1500,26 @@ class IdleGuard: #커비 가드 대기 상태
         pass
 
 class Guard: #커비 가드 상태
+    image = None
+    pattern = [0, 0, 0, 0, 1, 1, 1, 1]
     def __init__(self, kirby):
         self.kirby = kirby
+        if Guard.image == None:
+            Guard.image = load_image('Resource/Character/KirbyGuard.png')
     def enter(self, e):
-        pass
+        self.kirby.frame = 0
+        self.kirby.wait_time = get_time()
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Guard.pattern)
+        if (get_time() - self.kirby.wait_time > 2 / ACTION_PER_TIME):
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            Guard.image.clip_draw(Guard.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else:
+            Guard.image.clip_composite_draw(Guard.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
 
 class Win: #커비 승리 상태
     def __init__(self, kirby):
