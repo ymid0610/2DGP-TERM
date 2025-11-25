@@ -26,6 +26,13 @@ def init():
     game_world.add_object(grass, 0)
     game_world.add_collision_pair('grass:kirby', grass, None)
 
+    global grass2
+    grass2 = Grass()
+    grass2.y = 200
+    grass2.x = 600
+    game_world.add_object(grass2, 0)
+    game_world.add_collision_pair('grass:kirby', grass2, None)
+
     global kirby
     kirby = Kirby()
     game_world.add_object(kirby, 1)
