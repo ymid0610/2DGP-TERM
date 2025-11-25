@@ -151,7 +151,7 @@ class Kirby: #부모 클래스 커비
                                        left_double_tap: self.IDLE_SUPER_JUMP, right_double_tap: self.IDLE_SUPER_JUMP,
                                        left_down: self.IDLE_SUPER_JUMP, right_down: self.IDLE_SUPER_JUMP,
                                        left_up: self.IDLE_SUPER_JUMP, right_up: self.IDLE_SUPER_JUMP},
-                self.SUPER_JUMP: {time_out: self.END_SUPER_JUMP, a_down: self.END_SUPER_JUMP,
+                self.SUPER_JUMP: {time_out: self.END_SUPER_JUMP, a_down: self.END_SUPER_JUMP, up_down: self.SUPER_JUMP,
                                   left_double_tap: self.SUPER_JUMP, right_double_tap: self.SUPER_JUMP,
                                   left_down: self.SUPER_JUMP, right_down: self.SUPER_JUMP,
                                   left_up: self.SUPER_JUMP, right_up: self.SUPER_JUMP},
@@ -799,8 +799,12 @@ class SuperJump:  # 커비 슈퍼 점프 상태
                 self.kirby.flag = 'LEFT'
                 self.kirby.dir = self.kirby.face_dir = -1
         else:  # 최초 진입
-            self.kirby.frame = 0
-            self.kirby.wait_time = get_time()
+            if up_down(e):
+                self.kirby.yv = JUMP_SPEED_PPS / 2
+                self.kirby.stopped = False
+            else:
+                self.kirby.frame = 0
+                self.kirby.wait_time = get_time()
             if self.kirby.dir >= 1:  # 오른쪽 걷기+대쉬 상태
                 self.kirby.flag = 'RIGHT'
             elif self.kirby.dir <= -1:  # 왼쪽 걷기+대쉬 상태
@@ -811,12 +815,12 @@ class SuperJump:  # 커비 슈퍼 점프 상태
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-        self.kirby.stopped = False
-        self.kirby.yv = 0  # 체공을 위해 중력 무시
+        if self.kirby.stopped:
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
         if get_time() - self.kirby.wait_time > 3 / ACTION_PER_TIME:
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
         if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
-            self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+            self.kirby.x += 1.5 * self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
     def draw(self):
         if self.kirby.face_dir == 1:
             SuperJump.image.clip_draw(int(self.kirby.frame) * 48, 0, 48, 48, self.kirby.x, self.kirby.y + (3 * SCALE), 48 * SCALE, 48 * SCALE)
