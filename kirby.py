@@ -103,7 +103,6 @@ class Kirby: #부모 클래스 커비
         self.FALL_JUMP_ATTACK = FallJumpAttack(self)
         self.END_JUMP_ATTACK = EndJumpAttack(self)
         self.HIT = Hit(self)
-        self.IDLE_GUARD = IdleGuard(self)
         self.GUARD = Guard(self)
         self.WIN = Win(self)
         self.STAR = Star(self)
@@ -1476,18 +1475,6 @@ class EndJumpAttack: #커비 점프 베기 공격 착지 상태
             EndJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
 
 class Hit: #커비 피격 상태
-    def __init__(self, kirby):
-        self.kirby = kirby
-    def enter(self, e):
-        pass
-    def exit(self, e):
-        pass
-    def do(self):
-        pass
-    def draw(self):
-        pass
-
-class IdleGuard: #커비 가드 대기 상태
     def __init__(self, kirby):
         self.kirby = kirby
     def enter(self, e):
