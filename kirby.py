@@ -29,7 +29,7 @@ GRAVITY = 9.8 # m/s^2
 GRAVITY_PPS = GRAVITY * PIXEL_PER_METER
 
 # 커비 액션 속도
-TIME_PER_ACTION = 1.0 # 액션 초
+TIME_PER_ACTION = 10.0 # 액션 초
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION # 초당 액션
 FRAMES_PER_ACTION = 12 # 액션당 프레임 수
 
@@ -388,6 +388,10 @@ class DashAttack: #커비 대쉬 공격 상태
             DashAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
         else:
             DashAttack.image.clip_composite_draw((int(self.kirby.frame) % 2) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y, 96 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return (self.kirby.x - (96 * SCALE / 2) + (10 * SCALE), self.kirby.y - (48 * SCALE / 2) - (0 * SCALE),
+                self.kirby.x + (96 * SCALE / 2) - (10 * SCALE), self.kirby.y + (48 * SCALE / 2) - (14 * SCALE))
 
 class IdleJump: #커비 점프 대기 상태
     image = None
@@ -641,7 +645,8 @@ class SpinAttack: #커비 공중베기 공격 상태
             SpinAttack.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y - (7 * SCALE), 48 * SCALE, 48 * SCALE)
         draw_rectangle(*self.get_bb())
     def get_bb(self):
-        return self.kirby.x - (48 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE), self.kirby.x + (48 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE)
+        return (self.kirby.x - (48 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE),
+                self.kirby.x + (48 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE))
 
 class IdleSuperJump:  # 커비 슈퍼 점프 대기 상태
     image = None
@@ -1153,7 +1158,8 @@ class SlashAttack: #커비 베기 공격 상태
             SlashAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
         draw_rectangle(*self.get_bb())
     def get_bb(self):
-        return self.kirby.x - (96 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE), self.kirby.x + (96 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE)
+        return (self.kirby.x - (96 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE),
+                self.kirby.x + (96 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE))
 
 class RapidAttack: #커비 연속 공격 상태
     image = None
@@ -1197,6 +1203,10 @@ class RapidAttack: #커비 연속 공격 상태
             RapidAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
         else:
             RapidAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x,self.kirby.y - (7 * SCALE), 96 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return (self.kirby.x - (96 * SCALE / 2), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE),
+                self.kirby.x + (96 * SCALE / 2), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE))
 
 class IdleJumpAttack: #커비 점프 베기 공격 대기 상태
     image = None
@@ -1303,6 +1313,10 @@ class RiseJumpAttack: #커비 점프 상승 베기 공격 상태
             RiseJumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
         else:
             RiseJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return (self.kirby.x - (96 * SCALE / 2) + (12 * SCALE), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE),
+                self.kirby.x + (96 * SCALE / 2) - (12 * SCALE), self.kirby.y + (48 * SCALE / 2) - (7 * SCALE))
 
 class JumpAttack: #커비 점프 공격 상태
     image = None
@@ -1369,6 +1383,10 @@ class JumpAttack: #커비 점프 공격 상태
             JumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
         else:
             JumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return (self.kirby.x - (96 * SCALE / 2) + (12 * SCALE), self.kirby.y - (48 * SCALE / 2),
+                self.kirby.x + (96 * SCALE / 2) - (12 * SCALE), self.kirby.y + (48 * SCALE / 2))
 
 class FallJumpAttack: #커비 점프 낙하 베기 공격 상태
     image = None
@@ -1426,6 +1444,10 @@ class FallJumpAttack: #커비 점프 낙하 베기 공격 상태
             FallJumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (2 * SCALE), 96 * SCALE, 48 * SCALE)
         else:
             FallJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (2 * SCALE), 96 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return (self.kirby.x - (96 * SCALE / 2) + (15 * SCALE), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE),
+                self.kirby.x + (96 * SCALE / 2) - (15 * SCALE), self.kirby.y + (48 * SCALE / 2) + (4 * SCALE))
 
 class EndJumpAttack: #커비 점프 베기 공격 착지 상태
     image = None
@@ -1473,6 +1495,10 @@ class EndJumpAttack: #커비 점프 베기 공격 착지 상태
             EndJumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
         else:
             EndJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (11 * SCALE), 96 * SCALE, 48 * SCALE)
+        draw_rectangle(*self.get_bb())
+    def get_bb(self):
+        return (self.kirby.x - (96 * SCALE / 2) + (14 * SCALE), self.kirby.y - (48 * SCALE / 2) - (14 * SCALE),
+                self.kirby.x + (96 * SCALE / 2) - (14 * SCALE), self.kirby.y + (48 * SCALE / 2) - (35 * SCALE))
 
 class Hit: #커비 피격 상태
     def __init__(self, kirby):
