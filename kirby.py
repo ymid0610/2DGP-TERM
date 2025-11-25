@@ -949,7 +949,6 @@ class IdleFall: #커비 점프 낙하 상태
             else:  # 정지 상태
                 self.kirby.flag = 'IDLE'
             self.kirby.frame = 0
-            self.kirby.stopped = False
     def exit(self, e):
         pass
     def do(self):
@@ -1017,6 +1016,7 @@ class Fall: #커비 점프 착지 및 구르기 상태
     def do(self):
         self.kirby.frame = (self.kirby.frame + 1.5 * FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 12
         self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        self.kirby.stopped = False
         if not self.animation:
             if get_time() - self.kirby.wait_time > self.kirby.frame_time:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
@@ -1326,7 +1326,7 @@ class RiseJumpAttack: #커비 점프 상승 베기 공격 상태
                 self.kirby.dir = self.kirby.face_dir = -1
         else: # 최초 진입
             self.kirby.frame = 0
-            self.kirby.vy = 1.2 * JUMP_SPEED_PPS
+            self.kirby.yv = JUMP_SPEED_PPS
             if self.kirby.dir >= 1: # 오른쪽 걷기+대쉬 상태
                 self.kirby.flag = 'RIGHT'
             elif self.kirby.dir <= -1: # 왼쪽 걷기+대쉬 상태
@@ -1336,9 +1336,10 @@ class RiseJumpAttack: #커비 점프 상승 베기 공격 상태
     def exit(self, e):
         print(f'{self.kirby.dir}, {self.kirby.flag}, RiseJumpAttack')
     def do(self):
-        self.kirby.y += self.kirby.vy * game_framework.frame_time
-        self.kirby.vy -= GRAVITY_PPS * game_framework.frame_time
-        if self.kirby.vy <= 0:
+        self.kirby.stopped = False
+        if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
+            self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        if self.kirby.yv - GRAVITY_PPS * game_framework.frame_time <= 10:
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
@@ -1399,6 +1400,7 @@ class JumpAttack: #커비 점프 공격 상태
     def exit(self, e):
         print(f'{self.kirby.dir}, {self.kirby.flag}, JumpAttack')
     def do(self):
+        self.kirby.stopped = False
         if not self.animation:
             if get_time() - self.kirby.wait_time > self.kirby.frame_time:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
@@ -1410,6 +1412,8 @@ class JumpAttack: #커비 점프 공격 상태
                 self.kirby.frame_time = get_time() - self.kirby.frame_time
                 self.kirby.wait_time = get_time()
                 self.animation = False
+        if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
+            self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
     def draw(self):
         if self.kirby.face_dir == 1:
             JumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
@@ -1467,9 +1471,9 @@ class FallJumpAttack: #커비 점프 낙하 베기 공격 상태
         print(f'{self.kirby.dir}, {self.kirby.flag}, FallJumpAttack')
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
-        self.kirby.y -= self.kirby.vy * game_framework.frame_time
-        self.kirby.vy += GRAVITY_PPS * game_framework.frame_time
-        if self.kirby.vy >= 1.2 * JUMP_SPEED_PPS:
+        if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
+            self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
+        if self.kirby.stopped:
             self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
     def draw(self):
         if self.kirby.face_dir == 1:
