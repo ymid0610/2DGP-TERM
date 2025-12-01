@@ -253,6 +253,7 @@ class Kirby: #부모 클래스 커비
     def draw(self):
         self.state_machine.draw()
         draw_rectangle(*self.get_bb())
+        draw_rectangle(*self.get_base_bb())
         self.font.draw(self.x, self.y - 96, f'(hp = {self.hp:3}, {self.x:5.5}, {self.y:5.5})', (255, 0, 0))
     def get_bb(self):
         state_machine = getattr(self, 'state_machine', None)
@@ -263,13 +264,15 @@ class Kirby: #부모 클래스 커비
                 return cur.get_bb()
             except Exception:
                 pass
-        return self.x - (11 * SCALE), self.y - (19 * SCALE), self.x + (11 * SCALE), self.y + (3 * SCALE)
+        return self.get_base_bb()
+    def get_base_bb(self):
+        return (self.x - (11 * SCALE), self.y - (19 * SCALE), self.x + (11 * SCALE), self.y + (3 * SCALE))
     def handle_collision(self, group, other):
         if group == 'grass:kirby':
             if self.yv < 0:
                 self.stopped = True
                 self.yv = 0.0
-                if self.state_machine.cur_state is self.DASH_ATTACK:
+                if self.state_machine.cur_state in (self.DASH_ATTACK, self.FALL_JUMP_ATTACK, self.END_JUMP_ATTACK):
                     pass
                 else:
                     self.y += other.get_bb()[3] - self.get_bb()[1]
@@ -1134,7 +1137,6 @@ class JumpAttack: #커비 점프 공격 상태
             JumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
         else:
             JumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y, 96 * SCALE, 48 * SCALE)
-        draw_rectangle(*self.get_bb())
     def get_bb(self):
         return (self.kirby.x - (96 * SCALE / 2) + (12 * SCALE), self.kirby.y - (48 * SCALE / 2),
                 self.kirby.x + (96 * SCALE / 2) - (12 * SCALE), self.kirby.y + (48 * SCALE / 2))
@@ -1164,7 +1166,6 @@ class FallJumpAttack: #커비 점프 낙하 베기 공격 상태
             FallJumpAttack.image.clip_draw(int(self.kirby.frame) * 96, 0, 96, 48, self.kirby.x, self.kirby.y - (2 * SCALE), 96 * SCALE, 48 * SCALE)
         else:
             FallJumpAttack.image.clip_composite_draw(int(self.kirby.frame) * 96, 0, 96, 48, 0, 'h', self.kirby.x, self.kirby.y - (2 * SCALE), 96 * SCALE, 48 * SCALE)
-        draw_rectangle(*self.get_bb())
     def get_bb(self):
         return (self.kirby.x - (96 * SCALE / 2) + (15 * SCALE), self.kirby.y - (48 * SCALE / 2) - (7 * SCALE),
                 self.kirby.x + (96 * SCALE / 2) - (15 * SCALE), self.kirby.y + (48 * SCALE / 2) + (4 * SCALE))
