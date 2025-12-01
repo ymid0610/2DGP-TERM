@@ -81,6 +81,7 @@ class Kirby: #부모 클래스 커비
         self.yv = 0.0
         self._last_tap = {'RIGHT': 0.0, 'LEFT': 0.0}
         self.stopped = False
+        self.hp = 100
 
         # 상태 객체들
         self.IDLE = Idle(self)
