@@ -83,6 +83,8 @@ class Kirby: #부모 클래스 커비
         self._last_tap = {'RIGHT': 0.0, 'LEFT': 0.0}
         self.stopped = False
         self.hp = 100
+        self.hit_dir = 0
+        self.hit_cooldown = 0.0
 
         # 디버깅용 폰트
         self.font = load_font('Resource/Font/ENCR10B.TTF', 16)
@@ -229,6 +231,8 @@ class Kirby: #부모 클래스 커비
         else:
             if self.yv < 0:
                 self.yv = 0.0
+        if self.hit_cooldown > 0.0:
+            self.hit_cooldown = max(0.0, self.hit_cooldown - game_framework.frame_time)
         self.state_machine.update()
     def handle_event(self, event):
         # 더블탭 감지: 빠르게 같은 방향으로 두 번 누르면 ('DOUBLE_TAP', 'RIGHT'|'LEFT') 이벤트 발생
@@ -291,15 +295,28 @@ class Kirby: #부모 클래스 커비
                 # 안전장치: bb 조회 실패 시 기존 로직 진행
                 pass
             # 충돌시 공격상태가 아닐경우
+            if self.hit_cooldown > 0.0:
+                return
             if self.state_machine.cur_state not in (self.SLASH_ATTACK, self.RAPID_ATTACK, self.SPIN_ATTACK,
                                                     self.DASH_ATTACK,
                                                     self.JUMP_ATTACK, self.RISE_JUMP_ATTACK, self.FALL_JUMP_ATTACK,
                                                     self.END_JUMP_ATTACK,
                                                     self.GUARD, self.FALL, self.HIT):
+                self.hit_dir = self.compare_locate(other)
+                if self.state_machine.cur_state in (self.IDLE_RISE, self.JUMP, self.IDLE_FALL,
+                                                        self.IDLE_SUPER_JUMP, self.SUPER_JUMP, self.END_SUPER_JUMP):
+                    self.hit_dir *= 2
+                self.hit_cooldown = 1.0
                 self.state_machine.handle_state_event(('HIT', None))
     def take_damage(self, amount):
         self.hp -= amount
-
+    def compare_locate(self, other):
+        if self.x < other.x:
+            return -2
+        elif self.x > other.x:
+            return 2
+        else:
+            return 0
     # 키 입력에 따른 상태 플래그 판단 함수
     def judgement_key_flag(self, e):
         initial = False
@@ -1253,8 +1270,9 @@ class Hit: #커비 피격 상태
             self.animation = True
             self.kirby.hp -= 1
     def exit(self, e):
-        pass
+        print(f'{self.kirby.dir}, {self.kirby.flag}, Hit')
     def do(self):
+        self.kirby.stopped = False
         if not self.animation:
             if get_time() - self.kirby.wait_time > self.kirby.frame_time:
                 self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
@@ -1266,6 +1284,7 @@ class Hit: #커비 피격 상태
                 self.kirby.frame_time = get_time() - self.kirby.frame_time
                 self.kirby.wait_time = get_time()
                 self.animation = False
+        self.kirby.x += self.kirby.hit_dir * WALK_SPEED_PPS * game_framework.frame_time
     def draw(self):
         if self.kirby.face_dir == 1:
             Hit.image.clip_composite_draw(int(self.kirby.frame) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y - (8 * SCALE), 48 * SCALE, 48 * SCALE)
