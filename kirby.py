@@ -72,7 +72,7 @@ def left_double_tap(e):
 class Kirby: #부모 클래스 커비
     def __init__(self):
         # 초기값
-        self.x, self.y = 240, 600
+        self.x, self.y = 240.0, 600.0
         self.frame = 0
         self.face_dir = 1
         self.dir = 0
@@ -82,6 +82,9 @@ class Kirby: #부모 클래스 커비
         self._last_tap = {'RIGHT': 0.0, 'LEFT': 0.0}
         self.stopped = False
         self.hp = 100
+
+        # 디버깅용 폰트
+        self.font = load_font('Resource/Font/ENCR10B.TTF', 16)
 
         # 상태 객체들
         self.IDLE = Idle(self)
@@ -250,6 +253,7 @@ class Kirby: #부모 클래스 커비
     def draw(self):
         self.state_machine.draw()
         draw_rectangle(*self.get_bb())
+        self.font.draw(self.x, self.y - 96, f'(hp = {self.hp:3}, {self.x:5.5}, {self.y:5.5})', (255, 0, 0))
     def get_bb(self):
         return self.x - (11 * SCALE), self.y - (19 * SCALE), self.x + (11 * SCALE), self.y + (3 * SCALE)
     def handle_collision(self, group, other):
@@ -332,7 +336,6 @@ class Idle: #커비 대기 상태
             Idle.image.clip_draw(Idle.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
         else:
             Idle.image.clip_composite_draw((Idle.pattern[int(self.kirby.frame)] % 12) * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
-
 class Down: #커비 앉기 상태
     image = None
     pattern = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
