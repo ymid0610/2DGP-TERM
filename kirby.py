@@ -43,25 +43,25 @@ after_delay_time_out = lambda e: e[0] == 'AFTER_DELAY_TIMEOUT'
 fall_out = lambda e: e[0] == 'FALLOUT'
 
 def right_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and (e[1].key == SDLK_RIGHT or e[1].key == SDLK_d)
 def right_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_RIGHT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and (e[1].key == SDLK_RIGHT or e[1].key == SDLK_d)
 def left_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_LEFT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and (e[1].key == SDLK_LEFT or e[1].key == SDLK_a)
 def left_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and (e[1].key == SDLK_LEFT or e[1].key == SDLK_a)
 def up_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_UP
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and (e[1].key == SDLK_UP or e[1].key == SDLK_w)
 def up_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_UP
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and (e[1].key == SDLK_UP or e[1].key == SDLK_w)
 def down_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_DOWN
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and (e[1].key == SDLK_DOWN or e[1].key == SDLK_s)
 def down_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_DOWN
-def a_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_a
-def a_up(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_a
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and (e[1].key == SDLK_DOWN or e[1].key == SDLK_s)
+def attack_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and (e[1].key == SDLK_LCTRL or e[1].key == SDLK_RCTRL)
+def attack_up(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and (e[1].key == SDLK_LCTRL or e[1].key == SDLK_RCTRL)
 
 # 더블탭 이벤트 판정용 함수
 def right_double_tap(e):
@@ -122,17 +122,17 @@ class Kirby: #부모 클래스 커비
             {
                 self.IDLE : {right_double_tap: self.DASH, left_double_tap: self.DASH,
                              right_down: self.WALK, left_down: self.WALK, left_up: self.WALK, right_up: self.WALK,
-                             down_down: self.DOWN, up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK,
+                             down_down: self.DOWN, up_down: self.IDLE_JUMP, attack_down: self.IDLE_SLASH_ATTACK,
                              time_out: self.WALK, fall_out: self.STAR},
                 self.DOWN: {right_down: self.WALK, left_down: self.WALK,
                             right_up: self.WALK, left_up: self.WALK, down_up: self.IDLE,
-                            a_down: self.GUARD},
+                            attack_down: self.GUARD},
                 self.WALK: {right_double_tap: self.IDLE, left_double_tap: self.IDLE,
                             right_up: self.IDLE, left_up: self.IDLE, right_down: self.IDLE, left_down: self.IDLE,
-                            up_down: self.IDLE_JUMP, a_down: self.IDLE_SLASH_ATTACK, fall_out: self.STAR},
+                            up_down: self.IDLE_JUMP, attack_down: self.IDLE_SLASH_ATTACK, fall_out: self.STAR},
                 self.DASH: {right_double_tap: self.IDLE, left_double_tap: self.IDLE,
                             right_down: self.IDLE, left_down: self.IDLE, left_up: self.IDLE, right_up: self.IDLE,
-                            a_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP,
+                            attack_down: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP,
                             down_down: self.FALL, fall_out: self.STAR},
                 self.IDLE_DASH_ATTACK: {time_out: self.DASH_ATTACK, after_delay_time_out: self.WALK,
                                         left_down: self.IDLE, left_up: self.IDLE,
@@ -143,21 +143,21 @@ class Kirby: #부모 클래스 커비
                                    fall_out: self.STAR},
                 self.IDLE_JUMP: {left_double_tap: self.IDLE_JUMP, right_double_tap: self.IDLE_JUMP,
                                  left_down: self.IDLE_JUMP, right_down: self.IDLE_JUMP, left_up: self.IDLE_JUMP, right_up: self.IDLE_JUMP,
-                                 time_out: self.IDLE_SUPER_JUMP, up_up: self.IDLE_RISE, a_down: self.IDLE_JUMP_ATTACK},
+                                 time_out: self.IDLE_SUPER_JUMP, up_up: self.IDLE_RISE, attack_down: self.IDLE_JUMP_ATTACK},
                 self.IDLE_RISE: {left_double_tap: self.IDLE_RISE, right_double_tap: self.IDLE_RISE,
                                  left_down: self.IDLE_RISE, right_down: self.IDLE_RISE, left_up: self.IDLE_RISE, right_up: self.IDLE_RISE,
-                                 time_out: self.JUMP, a_down: self.SPIN_ATTACK, up_down: self.IDLE_SUPER_JUMP},
+                                 time_out: self.JUMP, attack_down: self.SPIN_ATTACK, up_down: self.IDLE_SUPER_JUMP},
                 self.JUMP: {left_double_tap: self.JUMP, right_double_tap: self.JUMP,
                             left_down: self.JUMP, right_down: self.JUMP, left_up: self.JUMP, right_up: self.JUMP,
-                            time_out: self.IDLE_FALL, a_down: self.SPIN_ATTACK},
+                            time_out: self.IDLE_FALL, attack_down: self.SPIN_ATTACK},
                 self.SPIN_ATTACK: {left_double_tap: self.SPIN_ATTACK, right_double_tap: self.SPIN_ATTACK,
                                    left_down: self.SPIN_ATTACK, right_down: self.SPIN_ATTACK, left_up: self.SPIN_ATTACK, right_up: self.SPIN_ATTACK,
                                    time_out: self.IDLE_FALL},
-                self.IDLE_SUPER_JUMP: {time_out: self.SUPER_JUMP, a_down: self.SPIN_ATTACK,
+                self.IDLE_SUPER_JUMP: {time_out: self.SUPER_JUMP, attack_down: self.SPIN_ATTACK,
                                        left_double_tap: self.IDLE_SUPER_JUMP, right_double_tap: self.IDLE_SUPER_JUMP,
                                        left_down: self.IDLE_SUPER_JUMP, right_down: self.IDLE_SUPER_JUMP,
                                        left_up: self.IDLE_SUPER_JUMP, right_up: self.IDLE_SUPER_JUMP},
-                self.SUPER_JUMP: {time_out: self.END_SUPER_JUMP, a_down: self.END_SUPER_JUMP, up_down: self.SUPER_JUMP,
+                self.SUPER_JUMP: {time_out: self.END_SUPER_JUMP, attack_down: self.END_SUPER_JUMP, up_down: self.SUPER_JUMP,
                                   left_double_tap: self.SUPER_JUMP, right_double_tap: self.SUPER_JUMP,
                                   left_down: self.SUPER_JUMP, right_down: self.SUPER_JUMP,
                                   left_up: self.SUPER_JUMP, right_up: self.SUPER_JUMP, fall_out: self.STAR},
@@ -167,7 +167,7 @@ class Kirby: #부모 클래스 커비
                                       left_up: self.END_SUPER_JUMP, right_up: self.END_SUPER_JUMP},
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
-                                 time_out: self.IDLE, a_down: self.JUMP_ATTACK, up_down: self.IDLE_SUPER_JUMP, fall_out: self.STAR},
+                                 time_out: self.IDLE, attack_down: self.JUMP_ATTACK, up_down: self.IDLE_SUPER_JUMP, fall_out: self.STAR},
                 self.FALL: {time_out: self.IDLE,
                             left_double_tap: self.FALL, right_double_tap: self.FALL,
                             left_down: self.FALL, right_down: self.FALL,
@@ -176,14 +176,14 @@ class Kirby: #부모 클래스 커비
                                          left_double_tap: self.IDLE, right_double_tap: self.IDLE,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
-                self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK, a_down: self.RAPID_ATTACK,
+                self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK, attack_down: self.RAPID_ATTACK,
                                     left_double_tap: self.SLASH_ATTACK, right_double_tap: self.SLASH_ATTACK,
                                     left_down: self.SLASH_ATTACK, right_down: self.SLASH_ATTACK, left_up: self.SLASH_ATTACK, right_up: self.SLASH_ATTACK},
-                self.IDLE_ATTACK: {time_out: self.IDLE, after_delay_time_out: self.IDLE, a_down: self.RAPID_ATTACK,
+                self.IDLE_ATTACK: {time_out: self.IDLE, after_delay_time_out: self.IDLE, attack_down: self.RAPID_ATTACK,
                                    left_double_tap: self.DASH, right_double_tap: self.DASH,
                                    left_down: self.IDLE, right_down: self.IDLE,
                                    left_up: self.IDLE, right_up: self.IDLE},
-                self.RAPID_ATTACK: {after_delay_time_out: self.IDLE_ATTACK, a_up: self.IDLE_ATTACK,
+                self.RAPID_ATTACK: {after_delay_time_out: self.IDLE_ATTACK, attack_up: self.IDLE_ATTACK,
                                     left_double_tap: self.RAPID_ATTACK, right_double_tap: self.RAPID_ATTACK,
                                     left_down: self.RAPID_ATTACK, right_down: self.RAPID_ATTACK,
                                     left_up: self.RAPID_ATTACK, right_up: self.RAPID_ATTACK},
@@ -210,7 +210,7 @@ class Kirby: #부모 클래스 커비
                 self.GUARD: {right_down: self.WALK, left_down: self.WALK,
                              right_up: self.WALK, left_up: self.WALK,
                              up_down: self.IDLE_JUMP, down_down: self.DOWN,
-                             time_out: self.IDLE, a_down: self.IDLE_SLASH_ATTACK},
+                             time_out: self.IDLE, attack_down: self.IDLE_SLASH_ATTACK},
                 self.STAR: {time_out: self.IDLE,
                             left_double_tap: self.STAR, right_double_tap: self.STAR,
                             left_down: self.STAR, right_down: self.STAR,
@@ -228,7 +228,7 @@ class Kirby: #부모 클래스 커비
     def handle_event(self, event):
         # 더블탭 감지: 빠르게 같은 방향으로 두 번 누르면 ('DOUBLE_TAP', 'RIGHT'|'LEFT') 이벤트 발생
         if event.type == SDL_KEYDOWN:
-            if event.key == SDLK_RIGHT:
+            if event.key == SDLK_RIGHT or event.key == SDLK_d:
                 now = get_time()
                 if now - self._last_tap['RIGHT'] <= DOUBLE_TAP_TIME:
                     self.face_dir = 1
@@ -238,7 +238,7 @@ class Kirby: #부모 클래스 커비
                     return
                 else:
                     self._last_tap['RIGHT'] = now
-            elif event.key == SDLK_LEFT:
+            elif event.key == SDLK_LEFT or event.key == SDLK_a:
                 now = get_time()
                 if now - self._last_tap['LEFT'] <= DOUBLE_TAP_TIME:
                     self.face_dir = -1
@@ -339,7 +339,7 @@ class Idle: #커비 대기 상태
             self.kirby.dir = 0
         self.kirby.frame = 0
     def exit(self, e):
-        if a_down(e):
+        if attack_down(e):
             self.kirby.flag = 'IDLE'
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Idle.pattern)
@@ -391,7 +391,7 @@ class Walk: #커비 걷기 상태
         else:
             self.kirby.dir = self.kirby.face_dir
     def exit(self, e):
-        if a_down(e):
+        if attack_down(e):
             if self.kirby.face_dir == 1:
                 self.kirby.flag = 'RIGHT'
             else:
@@ -440,7 +440,7 @@ class IdleDashAttack: #커비 대쉬 공격 대기 상태
             IdleDashAttack.image = load_image('Resource/Character/KirbyIdleDashAttack.png')
     def enter(self, e):
         self.kirby.wait_time = get_time()
-        if a_down(e):
+        if attack_down(e):
             self.kirby.flag = 'TIMEOUT'
         elif after_delay_time_out(e):
             self.kirby.flag = 'AFTER_DELAY_TIMEOUT'
