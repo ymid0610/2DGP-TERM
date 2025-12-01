@@ -140,7 +140,7 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_DASH_ATTACK: {time_out: self.DASH_ATTACK, after_delay_time_out: self.WALK, hit: self.HIT,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
-                self.DASH_ATTACK: {after_delay_time_out: self.IDLE_DASH_ATTACK,
+                self.DASH_ATTACK: {after_delay_time_out: self.IDLE_DASH_ATTACK, up_down: self.IDLE_JUMP_ATTACK,
                                    left_down: self.IDLE, left_up: self.IDLE,
                                    right_down: self.IDLE, right_up: self.IDLE,
                                    hit: self.HIT},
@@ -175,14 +175,15 @@ class Kirby: #부모 클래스 커비
                             left_double_tap: self.FALL, right_double_tap: self.FALL,
                             left_down: self.FALL, right_down: self.FALL,
                             left_up: self.FALL, right_up: self.FALL},
-                self.IDLE_SLASH_ATTACK: {time_out: self.SLASH_ATTACK, down_down: self.DOWN, hit: self.HIT,
+                self.IDLE_SLASH_ATTACK: {time_out: self.RAPID_ATTACK, down_down: self.DOWN, hit: self.HIT,
+                                         attack_up: self.SLASH_ATTACK, up_down: self.IDLE_JUMP_ATTACK,
                                          left_double_tap: self.IDLE, right_double_tap: self.IDLE,
                                         left_down: self.IDLE, left_up: self.IDLE,
                                         right_down: self.IDLE, right_up: self.IDLE},
                 self.SLASH_ATTACK: {after_delay_time_out: self.IDLE_ATTACK, attack_down: self.RAPID_ATTACK, hit: self.HIT,
                                     left_double_tap: self.SLASH_ATTACK, right_double_tap: self.SLASH_ATTACK,
                                     left_down: self.SLASH_ATTACK, right_down: self.SLASH_ATTACK, left_up: self.SLASH_ATTACK, right_up: self.SLASH_ATTACK},
-                self.IDLE_ATTACK: {time_out: self.IDLE, after_delay_time_out: self.IDLE, attack_down: self.RAPID_ATTACK,
+                self.IDLE_ATTACK: {time_out: self.IDLE, after_delay_time_out: self.IDLE,
                                    left_double_tap: self.DASH, right_double_tap: self.DASH,
                                    left_down: self.IDLE, right_down: self.IDLE, hit: self.HIT,
                                    left_up: self.IDLE, right_up: self.IDLE},
@@ -216,7 +217,7 @@ class Kirby: #부모 클래스 커비
                            left_up: self.HIT, right_up: self.HIT},
                 self.GUARD: {right_down: self.GUARD, left_down: self.GUARD, right_double_tap: self.GUARD, left_double_tap: self.GUARD,
                              right_up: self.GUARD, left_up: self.GUARD,
-                             up_down: self.IDLE_JUMP, down_down: self.DOWN,
+                             up_down: self.IDLE_JUMP,
                              time_out: self.IDLE, attack_down: self.IDLE_SLASH_ATTACK, hit: self.SLASH_ATTACK},
                 self.STAR: {time_out: self.IDLE,
                             left_double_tap: self.STAR, right_double_tap: self.STAR,
@@ -307,7 +308,7 @@ class Kirby: #부모 클래스 커비
                 if self.state_machine.cur_state in (self.IDLE_RISE, self.JUMP, self.IDLE_FALL,
                                                     self.IDLE_SUPER_JUMP, self.SUPER_JUMP, self.END_SUPER_JUMP):
                     self.hit_dir *= 2
-                self.hit_cooldown = 1.0
+                self.hit_cooldown = 2.0
                 if self.state_machine.cur_state is self.GUARD:
                     other.hit_dir = other.compare_locate(self)
                     other.hit_cooldown = 1.0
