@@ -54,13 +54,13 @@ def init():
     kirby1 = Kirby()
     game_world.add_object(kirby1, 1)
     game_world.add_collision_pair('grass:kirby', None, kirby1)
-    game_world.add_collision_pair('kirby:ai', kirby1, None)
+    game_world.add_collision_pair('kirby1:kirby2', kirby1, None)
 
     kirby2 = Kirby()
     kirby2.x = -20.0
     game_world.add_object(kirby2, 1)
     game_world.add_collision_pair('grass:kirby', None, kirby2)
-    game_world.add_collision_pair('kirby:kirby2', None, kirby2)
+    game_world.add_collision_pair('kirby1:kirby2', None, kirby2)
 
 def update():
     game_world.update()
