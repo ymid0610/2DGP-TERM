@@ -255,13 +255,30 @@ class Kirby: #부모 클래스 커비
         draw_rectangle(*self.get_bb())
         self.font.draw(self.x, self.y - 96, f'(hp = {self.hp:3}, {self.x:5.5}, {self.y:5.5})', (255, 0, 0))
     def get_bb(self):
+        state_machine = getattr(self, 'state_machine', None)
+        if state_machine is not None:
+            cur = getattr(state_machine, 'cur_state', None)
+        if cur is not None and hasattr(cur, 'get_bb'):
+            try:
+                return cur.get_bb()
+            except Exception:
+                pass
         return self.x - (11 * SCALE), self.y - (19 * SCALE), self.x + (11 * SCALE), self.y + (3 * SCALE)
     def handle_collision(self, group, other):
         if group == 'grass:kirby':
             if self.yv < 0:
                 self.stopped = True
                 self.yv = 0.0
-                self.y += other.get_bb()[3] - self.get_bb()[1]
+                if self.state_machine.cur_state is self.DASH_ATTACK:
+                    pass
+                else:
+                    self.y += other.get_bb()[3] - self.get_bb()[1]
+        elif group == 'kirby1:kirby2':
+            self.take_damage(10)
+            self.state_machine.handle_state_event(('HIT', None))
+    def take_damage(self, amount):
+        self.hp -= amount
+
     # 키 입력에 따른 상태 플래그 판단 함수
     def judgement_key_flag(self, e):
         initial = False
