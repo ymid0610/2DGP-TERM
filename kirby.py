@@ -143,7 +143,7 @@ class Kirby: #부모 클래스 커비
                 self.DASH_ATTACK: {after_delay_time_out: self.IDLE_DASH_ATTACK,
                                    left_down: self.IDLE, left_up: self.IDLE,
                                    right_down: self.IDLE, right_up: self.IDLE,
-                                   fall_out: self.STAR},
+                                   hit: self.HIT},
                 self.IDLE_JUMP: {left_double_tap: self.IDLE_JUMP, right_double_tap: self.IDLE_JUMP, hit: self.HIT,
                                  left_down: self.IDLE_JUMP, right_down: self.IDLE_JUMP, left_up: self.IDLE_JUMP, right_up: self.IDLE_JUMP,
                                  time_out: self.IDLE_SUPER_JUMP, up_up: self.IDLE_RISE, attack_down: self.IDLE_JUMP_ATTACK},
@@ -171,7 +171,7 @@ class Kirby: #부모 클래스 커비
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL, hit: self.HIT,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
                                  time_out: self.IDLE, attack_down: self.JUMP_ATTACK, up_down: self.IDLE_SUPER_JUMP, fall_out: self.STAR},
-                self.FALL: {time_out: self.IDLE,
+                self.FALL: {time_out: self.IDLE, attack_down: self.GUARD,
                             left_double_tap: self.FALL, right_double_tap: self.FALL,
                             left_down: self.FALL, right_down: self.FALL,
                             left_up: self.FALL, right_up: self.FALL},
@@ -214,8 +214,8 @@ class Kirby: #부모 클래스 커비
                            left_double_tap: self.HIT, right_double_tap: self.HIT,
                            left_down: self.HIT, right_down: self.HIT,
                            left_up: self.HIT, right_up: self.HIT},
-                self.GUARD: {right_down: self.WALK, left_down: self.WALK, fall_out: self.HIT,
-                             right_up: self.WALK, left_up: self.WALK,
+                self.GUARD: {right_down: self.GUARD, left_down: self.GUARD, right_double_tap: self.GUARD, left_double_tap: self.GUARD,
+                             right_up: self.GUARD, left_up: self.GUARD,
                              up_down: self.IDLE_JUMP, down_down: self.DOWN,
                              time_out: self.IDLE, attack_down: self.IDLE_SLASH_ATTACK, hit: self.SLASH_ATTACK},
                 self.STAR: {time_out: self.IDLE,
@@ -311,8 +311,8 @@ class Kirby: #부모 클래스 커비
                 if self.state_machine.cur_state is self.GUARD:
                     other.hit_dir = other.compare_locate(self)
                     other.hit_cooldown = 1.0
-                    if other.state_machine.cur_state is other.DASH_ATTACK:
-                        self.state_machine.handle_state_event(('FALLOUT', None))
+                    if other.state_machine.cur_state is other.FALL_JUMP_ATTACK:
+                        self.state_machine.handle_state_event(('TIMEOUT', None))
                     else:
                         other.state_machine.handle_state_event(('HIT', None))
                 self.state_machine.handle_state_event(('HIT', None))
@@ -1307,10 +1307,12 @@ class Guard: #커비 가드 상태
         if Guard.image == None:
             Guard.image = load_image('Resource/Character/KirbyGuard.png')
     def enter(self, e):
-        self.kirby.frame = 0
-        self.kirby.wait_time = get_time()
+        initial = self.kirby.judgement_key_flag(e)
+        if initial:
+            self.kirby.frame = 0
+            self.kirby.wait_time = get_time()
     def exit(self, e):
-        pass
+        print(f'{self.kirby.dir}, {self.kirby.flag}, Guard')
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Guard.pattern)
         if (get_time() - self.kirby.wait_time > 2 / ACTION_PER_TIME):
