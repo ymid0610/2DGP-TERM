@@ -5,7 +5,7 @@ import game_framework
 import game_world
 
 from kirby import Kirby
-from grass import Grass
+from grass import Grass, Floor
 
 kirby = None
 grass = None
@@ -21,17 +21,15 @@ def handle_events():
             kirby.handle_event(event)
 
 def init():
+    global floor
+    floor = Floor()
+    game_world.add_object(floor, 0)
+    game_world.add_collision_pair('grass:kirby', floor, None)
+
     global grass
     grass = Grass()
     game_world.add_object(grass, 0)
     game_world.add_collision_pair('grass:kirby', grass, None)
-
-    global grass2
-    grass2 = Grass()
-    grass2.y = 200
-    grass2.x = 600
-    game_world.add_object(grass2, 0)
-    game_world.add_collision_pair('grass:kirby', grass2, None)
 
     global kirby
     kirby = Kirby()
