@@ -1262,6 +1262,7 @@ class Star: #커비 별 상태
         initial = self.kirby.judgement_key_flag(e)
         if initial:
             self.kirby.frame = 0
+            self.kirby.hp -= 10
     def exit(self, e):
         self.kirby.stopped = False
     def do(self):
