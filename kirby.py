@@ -281,7 +281,8 @@ class Kirby: #부모 클래스 커비
             if self.yv < 0:
                 self.stopped = True
                 self.yv = 0.0
-                if self.state_machine.cur_state in (self.DASH_ATTACK, self.FALL_JUMP_ATTACK, self.END_JUMP_ATTACK):
+                if self.state_machine.cur_state in (self.DASH_ATTACK, self.FALL_JUMP_ATTACK, self.END_JUMP_ATTACK,
+                                                    self.SLASH_ATTACK, self.RAPID_ATTACK):
                     pass
                 else:
                     self.y += other.get_bb()[3] - self.get_bb()[1]
