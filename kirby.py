@@ -40,6 +40,7 @@ DOUBLE_TAP_TIME = 0.25
 
 time_out = lambda e: e[0] == 'TIMEOUT'
 after_delay_time_out = lambda e: e[0] == 'AFTER_DELAY_TIMEOUT'
+fall_out = lambda e: e[0] == 'FALLOUT'
 
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
@@ -155,13 +156,13 @@ class Kirby: #부모 클래스 커비
                                   left_double_tap: self.SUPER_JUMP, right_double_tap: self.SUPER_JUMP,
                                   left_down: self.SUPER_JUMP, right_down: self.SUPER_JUMP,
                                   left_up: self.SUPER_JUMP, right_up: self.SUPER_JUMP},
-                self.END_SUPER_JUMP: {time_out: self.FALL,
+                self.END_SUPER_JUMP: {time_out: self.FALL, fall_out: self.STAR,
                                       left_double_tap: self.END_SUPER_JUMP, right_double_tap: self.END_SUPER_JUMP,
                                       left_down: self.END_SUPER_JUMP, right_down: self.END_SUPER_JUMP,
                                       left_up: self.END_SUPER_JUMP, right_up: self.END_SUPER_JUMP},
                 self.IDLE_FALL: {left_double_tap: self.IDLE_FALL, right_double_tap: self.IDLE_FALL,
                                  left_down: self.IDLE_FALL, right_down: self.IDLE_FALL, left_up: self.IDLE_FALL, right_up: self.IDLE_FALL,
-                                 time_out: self.IDLE, a_down: self.JUMP_ATTACK, up_down: self.IDLE_SUPER_JUMP},
+                                 time_out: self.IDLE, a_down: self.JUMP_ATTACK, up_down: self.IDLE_SUPER_JUMP, fall_out: self.STAR},
                 self.FALL: {time_out: self.IDLE,
                             left_double_tap: self.FALL, right_double_tap: self.FALL,
                             left_down: self.FALL, right_down: self.FALL,
@@ -193,7 +194,7 @@ class Kirby: #부모 클래스 커비
                                    left_double_tap: self.JUMP_ATTACK, right_double_tap: self.JUMP_ATTACK,
                                    left_down: self.JUMP_ATTACK, right_down: self.JUMP_ATTACK,
                                    left_up: self.JUMP_ATTACK, right_up: self.JUMP_ATTACK},
-                self.FALL_JUMP_ATTACK: {time_out: self.END_JUMP_ATTACK,
+                self.FALL_JUMP_ATTACK: {time_out: self.END_JUMP_ATTACK, fall_out: self.STAR,
                                         left_double_tap: self.FALL_JUMP_ATTACK, right_double_tap: self.FALL_JUMP_ATTACK,
                                         left_down: self.FALL_JUMP_ATTACK, right_down: self.FALL_JUMP_ATTACK,
                                         left_up: self.FALL_JUMP_ATTACK, right_up: self.FALL_JUMP_ATTACK},
@@ -205,6 +206,7 @@ class Kirby: #부모 클래스 커비
                              right_up: self.WALK, left_up: self.WALK,
                              up_down: self.IDLE_JUMP, down_down: self.DOWN,
                              time_out: self.IDLE, a_down: self.IDLE_SLASH_ATTACK},
+                self.STAR: {}
             }
         )
     def update(self):
@@ -682,6 +684,8 @@ class EndSuperJump:  # 커비 슈퍼 점프 종료 상태
             EndSuperJump.image = load_image('Resource/Character/KirbyIdleSuperJump.png')
         print(f'{self.kirby.dir}, {self.kirby.flag}, EndSuperJump')
     def do(self):
+        if self.kirby.y < 0 - (48 * SCALE):
+            self.kirby.state_machine.handle_state_event(('FALLOUT', None))
         if not self.animation and not self.next_animation: # 두번째 애니메이션 변경 후 낙하 체크
             self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
             if self.kirby.stopped:
@@ -724,6 +728,8 @@ class IdleFall: #커비 점프 낙하 상태
         pass
     def do(self):
         self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 2
+        if self.kirby.y < 0 - (48 * SCALE):
+            self.kirby.state_machine.handle_state_event(('FALLOUT', None))
         if self.kirby.flag == 'RIGHT' or self.kirby.flag == 'LEFT':
             self.kirby.x += self.kirby.dir * WALK_SPEED_PPS * game_framework.frame_time
         if self.kirby.stopped:
@@ -1219,14 +1225,36 @@ class Win: #커비 승리 상태
     def draw(self):
         pass
 
-class Star: #커비 별 상태 (종료)
+class Star: #커비 별 상태
+    image = None
+    pattern = [0, 0, 1, 1]
     def __init__(self, kirby):
         self.kirby = kirby
+        self.dir = 0
+        self.tx, self.ty = 640, 480
+        if Star.image == None:
+            Star.image = load_image('Resource/Character/KirbyStar.png')
     def enter(self, e):
-        pass
+        self.kirby.frame = 0
     def exit(self, e):
         pass
     def do(self):
-        pass
+        self.kirby.frame = (self.kirby.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % len(Star.pattern)
+        self.kirby.stopped = True
+        if self.distance_less_than(self.tx, self.ty, self.kirby.x, self.kirby.y, 0.5):
+            self.kirby.state_machine.handle_state_event(('TIMEOUT', None))
+        else:
+            self.move_little(self.tx, self.ty)
     def draw(self):
-        pass
+        if self.kirby.face_dir == 1:
+            Star.image.clip_draw(Star.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, self.kirby.x, self.kirby.y, 48 * SCALE, 48 * SCALE)
+        else:
+            Star.image.clip_composite_draw(Star.pattern[int(self.kirby.frame)] * 48, 0, 48, 48, 0, 'h', self.kirby.x,self.kirby.y, 48 * SCALE, 48 * SCALE)
+    def move_little(self, tx, ty):
+        self.dir = math.atan2(ty - self.kirby.y, tx - self.kirby.x)
+        distance = 3 * WALK_SPEED_PPS * game_framework.frame_time
+        self.kirby.x += distance * math.cos(self.dir)
+        self.kirby.y += distance * math.sin(self.dir)
+    def distance_less_than(self, x1, y1, x2, y2, r):
+        distance = (x1 - x2) ** 2 + (y1 - y2) ** 2
+        return distance < (PIXEL_PER_METER * r) ** 2
