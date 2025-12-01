@@ -277,8 +277,22 @@ class Kirby: #부모 클래스 커비
                 else:
                     self.y += other.get_bb()[3] - self.get_bb()[1]
         elif group == 'kirby1:kirby2':
-            self.take_damage(10)
-            self.state_machine.handle_state_event(('HIT', None))
+            try:
+                my_bb = self.get_bb()
+                other_bb = other.get_bb()
+                if my_bb == self.get_base_bb() and other_bb == other.get_base_bb():
+                    return
+            except Exception:
+                # 안전장치: bb 조회 실패 시 기존 로직 진행
+                pass
+            # 충돌시 공격상태가 아닐경우
+            if self.state_machine.cur_state not in (self.SLASH_ATTACK, self.RAPID_ATTACK, self.SPIN_ATTACK,
+                                                    self.DASH_ATTACK,
+                                                    self.JUMP_ATTACK, self.RISE_JUMP_ATTACK, self.FALL_JUMP_ATTACK,
+                                                    self.END_JUMP_ATTACK,
+                                                    self.GUARD, self.FALL):
+                self.take_damage(10)
+                self.state_machine.handle_state_event(('HIT', None))
     def take_damage(self, amount):
         self.hp -= amount
 
