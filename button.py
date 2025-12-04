@@ -66,3 +66,9 @@ class Computer(Button):
         super().__init__(x, y, 401, 179)
         self.scale = 1.21
         self.image = load_image('Resource/UI/SelectComputer.png')
+
+class Start(Button):
+    def __init__(self, x, y):
+        super().__init__(x, y, 740, 166)
+        self.scale = 1.38
+        self.image = load_image('Resource/UI/ButtonStart.png')

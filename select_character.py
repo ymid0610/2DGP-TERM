@@ -1,7 +1,7 @@
 import game_framework
 from pico2d import *
 import play_mode
-from button import AddPlayer, RemovePlayer, Player1, Player2, Computer
+from button import AddPlayer, RemovePlayer, Player1, Player2, Computer, Start
 import game_world
 
 SCREEN_WIDTH = 1280
@@ -10,6 +10,7 @@ SCREEN_HEIGHT = 720
 buttons = []
 clicked_button = None
 player1, player2, computer = None, None, None
+start = None
 
 def init():
     global buttons, clicked_button, player1, player2
@@ -37,12 +38,24 @@ def clear_selection():
         b.clicked = False
 
 def update():
+    global buttons, clicked_button
     if clicked_button is None:
         for b in buttons:
             b.clicked = False
     else:
         for i, b in enumerate(buttons):
             b.clicked = (i == clicked_button)
+    global start
+    if len(buttons) == 4:
+        if start is None:
+            start = Start(148, 400)
+            game_world.add_object(start, 1)
+            buttons.append(start)
+        else:
+            game_world.remove_object(start)
+            buttons.remove(start)
+            start = None
+    buttons.sort(key=lambda btn: isinstance(btn, Start))
 
 def draw():
     clear_canvas()
@@ -69,7 +82,7 @@ def activate_selected():
             player1 = Player1(140, 0)
             buttons.append(player1)
             game_world.add_object(player1, 1)
-        elif len(buttons) == 3:
+        elif len(buttons) >= 3:
             if player2 is None:
                 player2 = Player2(631, 0)
                 buttons.append(player2)
@@ -82,7 +95,7 @@ def activate_selected():
             return
     elif clicked_button == 1:
         # Remove Player 버튼 처리: 역순으로 Player2, Player1 제거
-        if len(buttons) == 4:
+        if len(buttons) >= 4:
             if player2 is not None:
                 game_world.remove_object(player2)
                 buttons.remove(player2)
@@ -99,14 +112,14 @@ def activate_selected():
             return
     elif clicked_button == 3:
         # Player2 선택 시 컴퓨터 모드로 전환
-        if len(buttons) == 4 and player2 is not None:
+        if len(buttons) >= 4 and player2 is not None:
             game_world.remove_object(player2)
             buttons.remove(player2)
             player2 = None
             computer = Computer(631, 0)
             buttons.append(computer)
             game_world.add_object(computer, 1)
-        elif len(buttons) == 4 and computer is not None:
+        elif len(buttons) >= 4 and computer is not None:
             # 컴퓨터 모드 지우고 플레이어2 추가
             game_world.remove_object(computer)
             buttons.remove(computer)
@@ -116,6 +129,8 @@ def activate_selected():
             game_world.add_object(player2, 1)
         else:
             return
+    elif clicked_button == 4:
+        game_framework.change_mode(play_mode)
 
 def handle_events():
     global clicked_button
