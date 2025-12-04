@@ -1,6 +1,6 @@
 import game_framework
 from pico2d import *
-import play_mode
+import select_character
 from button import Fight, Setting
 import game_world
 
@@ -59,7 +59,7 @@ def activate_selected():
     if clicked_button is None:
         return
     if clicked_button == 0:
-        game_framework.change_mode(play_mode)
+        game_framework.change_mode(select_character)
     elif clicked_button == 1:
         print("Settings button clicked")
 
