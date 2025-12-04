@@ -4,13 +4,10 @@ import play_mode
 from button import *
 import game_world
 
-mouse_x, mouse_y = 0, 0
-# 파이트 버튼 객체 생성
-
 def init():
     global button
-    button = ButtonFight(400, 300)
-    game_world.add_object(button, 1)
+    button = Fight(400, 300), Setting(400, 100)
+    game_world.add_objects(button, 1)
 
 def finish():
     global button
@@ -32,6 +29,9 @@ def handle_events():
         if e.type == SDL_QUIT:
             game_framework.quit()
         elif e.type == SDL_MOUSEBUTTONDOWN:
-            mouse_x, mouse_y = e.x, e.y
-            if button.is_clicked(mouse_x, 720 - mouse_y):
+            mouse_x, mouse_y = e.x, 720 - e.y
+            # 버튼 클릭 여부 확인
+            if button[0].is_clicked(mouse_x, mouse_y):
                 game_framework.change_mode(play_mode)
+            elif button[1].is_clicked(mouse_x, mouse_y):
+                print("Settings button clicked")
