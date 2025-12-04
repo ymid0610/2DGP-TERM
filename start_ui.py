@@ -84,3 +84,5 @@ def handle_events():
                     select_button((clicked_button - 1) % len(buttons))
             elif e.key == SDLK_RETURN:
                 activate_selected()
+            elif e.key == SDLK_ESCAPE:
+                game_framework.quit()
