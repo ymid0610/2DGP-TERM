@@ -8,12 +8,9 @@ from kirby import Kirby
 from grass import Grass, Floor
 from background import Ground
 
-kirby = None
-grass = None
-background = None
+import common
 
 def handle_events():
-    global kirby, ai
     event_list = get_events()
     arrow_keys = (SDLK_LEFT, SDLK_RIGHT, SDLK_UP, SDLK_DOWN)
     wasd_keys = (SDLK_w, SDLK_a, SDLK_s, SDLK_d)
@@ -29,44 +26,41 @@ def handle_events():
         if event.type in (SDL_KEYDOWN, SDL_KEYUP):
             # 방향키 또는 우측 컨트롤 -> kirby1
             if event.key in arrow_keys or event.key == SDLK_RCTRL:
-                if kirby1 is not None:
-                    kirby1.handle_event(event)
+                if common.kirby1 is not None:
+                    common.kirby1.handle_event(event)
                 continue
             # WASD 또는 좌측 컨트롤 -> kirby2
             if event.key in wasd_keys or event.key == SDLK_LCTRL:
-                if kirby2 is not None:
-                    kirby2.handle_event(event)
+                if common.kirby2 is not None:
+                    common.kirby2.handle_event(event)
                 continue
         # 기타 이벤트(마우스 등)는 기본적으로 kirby로 전달
-        if kirby1 is not None:
-            kirby1.handle_event(event)
+        if common.kirby1 is not None:
+            common.kirby1.handle_event(event)
 
 def init():
-    global background
-    background = Ground()
-    game_world.add_object(background, 0)
+    common.background = Ground()
+    game_world.add_object(common.background, 0)
 
-    global floor
-    floor = Floor()
-    game_world.add_object(floor, 0)
-    game_world.add_collision_pair('grass:kirby', floor, None)
+    common.floor = Floor()
+    game_world.add_object(common.floor, 0)
+    game_world.add_collision_pair('grass:kirby', common.floor, None)
 
-    global grass
-    grass = Grass()
-    game_world.add_object(grass, 0)
-    game_world.add_collision_pair('grass:kirby', grass, None)
+    common.grass = Grass()
+    game_world.add_object(common.grass, 0)
+    game_world.add_collision_pair('grass:kirby', common.grass, None)
 
-    global kirby1, kirby2
-    kirby1 = Kirby()
-    game_world.add_object(kirby1, 1)
-    game_world.add_collision_pair('grass:kirby', None, kirby1)
-    game_world.add_collision_pair('kirby1:kirby2', kirby1, None)
 
-    kirby2 = Kirby()
-    kirby2.x = -20.0
-    game_world.add_object(kirby2, 1)
-    game_world.add_collision_pair('grass:kirby', None, kirby2)
-    game_world.add_collision_pair('kirby1:kirby2', None, kirby2)
+    common.kirby1 = Kirby()
+    game_world.add_object(common.kirby1, 1)
+    game_world.add_collision_pair('grass:kirby', None, common.kirby1)
+    game_world.add_collision_pair('kirby1:kirby2', common.kirby1, None)
+
+    common.kirby2 = Kirby()
+    common.kirby2.x = -20.0
+    game_world.add_object(common.kirby2, 1)
+    game_world.add_collision_pair('grass:kirby', None, common.kirby2)
+    game_world.add_collision_pair('kirby1:kirby2', None, common.kirby2)
 
 def update():
     game_world.update()
