@@ -6,9 +6,11 @@ import game_world
 
 from kirby import Kirby
 from grass import Grass, Floor
+from background import Ground
 
 kirby = None
 grass = None
+background = None
 
 def handle_events():
     global kirby, ai
@@ -40,6 +42,10 @@ def handle_events():
             kirby1.handle_event(event)
 
 def init():
+    global background
+    background = Ground()
+    game_world.add_object(background, 0)
+
     global floor
     floor = Floor()
     game_world.add_object(floor, 0)

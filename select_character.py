@@ -3,6 +3,7 @@ from pico2d import *
 import play_mode
 from button import AddPlayer, RemovePlayer, Player1, Player2, Computer, Start
 import game_world
+from background import Space
 
 SCREEN_WIDTH = 1280
 SCREEN_HEIGHT = 720
@@ -13,6 +14,9 @@ player1, player2, computer = None, None, None
 start = None
 
 def init():
+    background = Space()
+    game_world.add_object(background, 0)
+
     global buttons, clicked_button, player1, player2
     player1 = Player1(140, 0)
     player2 = Player2(631, 0)
